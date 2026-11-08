@@ -36,7 +36,6 @@ async function refreshConnection() {
     status.textContent = "Backend Miracolo raggiungibile · PAPER";
     status.classList.add("online");
     document.querySelector("#connection-dot")?.classList.remove("offline");
-    notice.hidden = true;
     engine.textContent = "Backend disponibile · Condor in verifica";
     engine.classList.remove("muted");
   } catch {
@@ -130,7 +129,21 @@ async function loadServers() {
     const online = servers.filter((server) => server.online).length;
     document.querySelector("#engine-status").textContent = `${online}/${servers.length} server online`;
     document.querySelector("#engine-status").classList.toggle("muted", online === 0);
+    const notice = document.querySelector("#connection-notice");
+    notice.hidden = online > 0;
+    if (online === 0) {
+      notice.querySelector("strong").textContent = "Nessun server Hummingbot online";
+      notice.querySelector("span").textContent = "Condor risponde, ma nessun server configurato risulta online. Controlla runtime e connessione Hummingbot API.";
+    }
   } catch (error) {
+    document.querySelector("#engine-status").textContent = "Condor non autenticato o non raggiungibile";
+    document.querySelector("#engine-status").classList.add("muted");
+    const notice = document.querySelector("#connection-notice");
+    notice.hidden = false;
+    notice.querySelector("strong").textContent = "Connessione Condor non disponibile";
+    notice.querySelector("span").textContent = error.message === "missing_api_token"
+      ? "Autenticazione Condor non configurata. Inserire nel backend un JWT di sessione Condor; mai nel browser."
+      : `Condor non raggiungibile: ${error.message}`;
     showMessage(container, error.message === "missing_api_token"
       ? "Autenticazione Condor non configurata. Inserire nel backend un JWT di sessione Condor; mai nel browser."
       : `Condor non raggiungibile: ${error.message}`);
