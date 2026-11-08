@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from ipaddress import ip_address
 from urllib.parse import parse_qs, unquote
 
 from .condor_readonly import CondorReadOnlyClient, CondorReadOnlyConfig
@@ -19,8 +20,15 @@ def create_app(client: CondorReadOnlyClient | None = None):
         headers = [("Content-Type", "application/json; charset=utf-8"),
                    ("Cache-Control", "no-store"),
                    ("X-Content-Type-Options", "nosniff")]
+        try:
+            is_loopback = ip_address(environ.get("REMOTE_ADDR", "")).is_loopback
+        except ValueError:
+            is_loopback = False
 
-        if method != "GET":
+        if not is_loopback:
+            status = "403 Forbidden"
+            payload = {"ok": False, "error": "loopback_access_only"}
+        elif method != "GET":
             status = "405 Method Not Allowed"
             payload = {"ok": False, "error": "method_not_allowed"}
             headers.append(("Allow", "GET"))
