@@ -82,6 +82,18 @@ class CondorReadOnlyTests(unittest.TestCase):
         self.assertEqual(client.servers(), {"connected": False, "reason": "missing_api_token"})
         mocked.assert_not_called()
 
+    @patch("miracolo_trading.condor_readonly.urlopen")
+    def test_market_tickers_are_read_only_and_encode_connector(self, mocked):
+        mocked.return_value = Response(b'{"connector":"binance spot","tickers":[]}')
+        client = CondorReadOnlyClient(CondorReadOnlyConfig(
+            "http://localhost:8088", token="session"
+        ))
+        self.assertEqual(client.market_tickers("paper", "binance spot"),
+                         {"connector": "binance spot", "tickers": []})
+        request = mocked.call_args.args[0]
+        self.assertEqual(request.get_method(), "GET")
+        self.assertIn("connector=binance+spot", request.full_url)
+
     def test_invalid_auth_mode_fails_closed(self):
         client = CondorReadOnlyClient(CondorReadOnlyConfig(
             "http://127.0.0.1:8088", auth_mode="none"
