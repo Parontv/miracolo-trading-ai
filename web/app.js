@@ -31,6 +31,15 @@ async function apiGet(path) {
 
 async function refreshConnection() {
   if (staticPreview) {
+    const alpacaStatus = document.querySelector("#alpaca-status");
+    const alpacaDetail = document.querySelector("#alpaca-detail");
+    if (alpacaStatus) {
+      alpacaStatus.textContent = "Runtime non collegato";
+      alpacaStatus.className = "pill muted";
+    }
+    if (alpacaDetail) {
+      alpacaDetail.textContent = "Stai visualizzando una preview statica: mostra l’interfaccia, ma non ospita il backend Python e non può autenticarsi con Alpaca. Il simulatore Binance qui sotto funziona separatamente nel browser.";
+    }
     const status = document.querySelector("#connection-status");
     const notice = document.querySelector("#connection-notice");
     const engine = document.querySelector("#engine-status");
