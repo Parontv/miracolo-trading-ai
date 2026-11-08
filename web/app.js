@@ -167,7 +167,7 @@ async function loadMarketTickers() {
   state.textContent = "Caricamento";
   try {
     const data = await apiGet(
-      \`/api/condor/servers/\${encodeURIComponent(server)}/market/tickers?connector=\${encodeURIComponent(connector)}\`
+      `/api/condor/servers/${encodeURIComponent(server)}/market/tickers?connector=${encodeURIComponent(connector)}`
     );
     table.replaceChildren();
     const rows = Array.isArray(data.tickers) ? data.tickers : [];
@@ -192,23 +192,23 @@ async function loadMarketTickers() {
         const change = document.createElement("span");
         change.textContent = ticker.change_pct == null
           ? "--"
-          : \`\${Number(ticker.change_pct).toFixed(2)}% · \${Math.max(1, Math.round((ticker.change_window_s || 86400) / 3600))}h\`;
+          : `${Number(ticker.change_pct).toFixed(2)}% · ${Math.max(1, Math.round((ticker.change_window_s || 86400) / 3600))}h`;
         if (ticker.change_pct != null) change.className = Number(ticker.change_pct) >= 0 ? "positive" : "negative";
         const volume = document.createElement("span");
         volume.textContent = ticker.usd_volume == null
           ? "--"
-          : \`$\${Number(ticker.usd_volume).toLocaleString("en-US", { maximumFractionDigits: 0 })}\`;
+          : `$${Number(ticker.usd_volume).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
         row.append(pair, price, change, volume);
         table.append(row);
       }
     }
     document.querySelector("#market-updated").textContent = data.updated_at
-      ? \`Ultimo aggiornamento: \${new Date(data.updated_at * 1000).toLocaleString("it-IT")}\`
+      ? `Ultimo aggiornamento: ${new Date(data.updated_at * 1000).toLocaleString("it-IT")}`
       : "Timestamp non fornito dall'exchange";
-    state.textContent = \`\${rows.length} coppie\`;
+    state.textContent = `${rows.length} coppie`;
     state.classList.remove("muted");
   } catch (error) {
-    showMessage(table, \`Ticker non disponibili: \${error.message}\`);
+    showMessage(table, `Ticker non disponibili: ${error.message}`);
     state.textContent = "Errore";
   }
 }
@@ -220,12 +220,12 @@ async function loadMarketVenues() {
   select.disabled = true;
   if (!server) return;
   try {
-    const data = await apiGet(\`/api/condor/servers/\${encodeURIComponent(server)}/market/venues\`);
+    const data = await apiGet(`/api/condor/servers/${encodeURIComponent(server)}/market/venues`);
     const venues = (data.venues || []).filter((venue) => venue.hummingbot_market_data);
     for (const venue of venues) {
       const option = document.createElement("option");
       option.value = venue.name;
-      option.textContent = venue.credentialed === false ? \`\${venue.name} · solo dati\` : venue.name;
+      option.textContent = venue.credentialed === false ? `${venue.name} · solo dati` : venue.name;
       select.append(option);
     }
     select.disabled = venues.length === 0;
@@ -235,7 +235,7 @@ async function loadMarketVenues() {
     }
     await loadMarketTickers();
   } catch (error) {
-    showMessage(document.querySelector("#market-tickers"), \`Venue non disponibili: \${error.message}\`);
+    showMessage(document.querySelector("#market-tickers"), `Venue non disponibili: ${error.message}`);
   }
 }
 
@@ -247,7 +247,7 @@ async function loadMarketServers() {
     for (const server of servers) {
       const option = document.createElement("option");
       option.value = server.name;
-      option.textContent = \`\${server.name} · \${server.online ? "online" : "offline"}\`;
+      option.textContent = `${server.name} · ${server.online ? "online" : "offline"}`;
       select.append(option);
     }
     if (!servers.length) {
@@ -266,7 +266,7 @@ async function loadMarketServers() {
     option.value = "";
     option.textContent = "Condor non collegato";
     select.append(option);
-    showMessage(document.querySelector("#market-tickers"), \`Server non disponibili: \${error.message}\`);
+    showMessage(document.querySelector("#market-tickers"), `Server non disponibili: ${error.message}`);
   }
 }
 
