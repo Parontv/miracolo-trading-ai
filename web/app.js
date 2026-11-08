@@ -27,14 +27,14 @@ async function refreshConnection() {
     if (!health.ok || health.mode !== "PAPER" || health.live_enabled !== false) throw new Error("Invalid safety state");
     status.textContent = "Backend Miracolo raggiungibile · PAPER";
     status.classList.add("online");
-    status.querySelector(".dot")?.classList.remove("offline");
+    document.querySelector("#connection-dot")?.classList.remove("offline");
     notice.hidden = true;
     engine.textContent = "Backend disponibile · Condor da verificare";
     engine.classList.remove("muted");
   } catch {
     status.textContent = "Backend non raggiungibile";
     status.classList.remove("online");
-    status.querySelector(".dot")?.classList.add("offline");
+    document.querySelector("#connection-dot")?.classList.add("offline");
     notice.hidden = false;
     engine.textContent = "In attesa del backend";
     engine.classList.add("muted");
