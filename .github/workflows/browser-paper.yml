@@ -1,0 +1,34 @@
+name: Browser PAPER validation
+
+on:
+  pull_request:
+    branches: [integration/condor-foundation]
+  push:
+    branches: [feature/readonly-dashboard-api]
+
+jobs:
+  browser-paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check browser bot JavaScript
+        run: node --check web/browser-bot.js
+      - name: Check dashboard JavaScript
+        run: node --check web/app.js
+      - name: Verify browser UI wiring
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('web/index.html', 'utf8');
+          const js = fs.readFileSync('web/browser-bot.js', 'utf8');
+          for (const id of ['browser-start','browser-stop','browser-bot-status','browser-market-list','browser-position-list','browser-trade-list','browser-event-list']) {
+            if (!html.includes('id="' + id + '"')) throw new Error('Missing UI element: ' + id);
+          }
+          if (!html.includes('browser-bot.js')) throw new Error('Browser bot script is not loaded');
+          if (!js.includes('new WebSocket(wsUrl)')) throw new Error('Market WebSocket loop missing');
+          if (!js.includes('state.enabled = false')) throw new Error('Stop control missing');
+          console.log('Browser PAPER UI wiring OK');
+          NODE
