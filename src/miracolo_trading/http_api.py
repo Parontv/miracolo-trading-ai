@@ -37,10 +37,15 @@ def create_app(client: CondorReadOnlyClient | None = None):
             if not parts[0]:
                 status = "404 Not Found"
                 payload = {"ok": False, "error": "not_found"}
-            elif len(parts) == 2 and parts[1] in {"status", "portfolio"}:
+            elif len(parts) == 2 and parts[1] in {"status", "portfolio", "bots", "positions"}:
                 name = unquote(parts[0])
-                payload = (condor.server_status(name) if parts[1] == "status"
-                           else condor.portfolio(name))
+                readers = {
+                    "status": condor.server_status,
+                    "portfolio": condor.portfolio,
+                    "bots": condor.bots,
+                    "positions": condor.positions,
+                }
+                payload = readers[parts[1]](name)
             elif len(parts) == 3 and parts[1:] == ["market", "venues"]:
                 payload = condor.market_venues(unquote(parts[0]))
             elif len(parts) == 3 and parts[1:] == ["market", "tickers"]:
