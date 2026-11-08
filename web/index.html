@@ -26,10 +26,10 @@
     <main class="main">
       <header class="topbar">
         <div><p class="eyebrow">CONTROL ROOM</p><h1 id="page-title">Panoramica</h1></div>
-        <div class="top-status"><span class="mode">PAPER</span><span class="status"><i class="dot offline"></i> Non connesso</span></div>
+        <div class="top-status"><span class="mode">PAPER</span><span class="status" id="connection-status"><i class="dot offline"></i> Verifica connessione…</span></div>
       </header>
 
-      <section class="notice" role="status">
+      <section class="notice" id="connection-notice" role="status">
         <strong>Interfaccia iniziale</strong>
         <span>Il motore Hummingbot non è ancora collegato. Nessun dato di mercato o risultato viene simulato in questa schermata.</span>
       </section>
@@ -43,7 +43,7 @@
           <article class="metric"><span>Ordini attivi</span><strong>--</strong><small>Dato non disponibile</small></article>
         </div>
         <div class="content-grid">
-          <article class="panel"><div class="panel-title"><div><h3>Motore di esecuzione</h3><p>Hummingbot</p></div><span class="pill muted">Non collegato</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime non disponibile</strong><p>Qui vedrai stato del bot, exchange, connettore e ultima sincronizzazione.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Motore di esecuzione</h3><p>Hummingbot</p></div><span class="pill muted" id="engine-status">In attesa del backend</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime non disponibile</strong><p>Qui vedrai stato del bot, exchange, connettore e ultima sincronizzazione.</p></div></article>
           <article class="panel"><div class="panel-title"><div><h3>Analisi AI</h3><p>TradingAgents</p></div><span class="pill muted">Disattivato</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Analisi non avviata</strong><p>Le analisi saranno consultive. L'AI non potrà inviare ordini direttamente.</p></div></article>
         </div>
         <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Nessun evento registrato. Gli eventi appariranno dopo il collegamento del runtime.</div></article>
