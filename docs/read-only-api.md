@@ -36,12 +36,11 @@ the data adapter refuses remote hosts in local mode. In Telegram mode, use
 \`bearer\` mode and supply a valid session JWT in the backend environment. Do not
 use exchange API keys here, and do not commit JWTs to Git.
 
-For remote access, use a private authenticated network and HTTPS. Do not expose
-Condor's local dashboard or API directly to the public Internet.
+For remote access, use a private authenticated network and HTTPS. Place the UI and API behind an authenticated reverse proxy, use a private authenticated network and HTTPS, and have the proxy connect to Miracolo over loopback. Do not expose Miracolo, Condor's local dashboard, or Hummingbot API directly to the public Internet.
 
 ## Current boundary
 
-The WSGI adapter and same-origin dashboard client expose health, server list,
+The WSGI adapter accepts only loopback clients; the same-origin dashboard client exposes health, server list,
 server status, cached portfolio reads, market venues, ticker snapshots, bot status, and open positions. The only permitted POST is the
 loopback-only Condor local-login call when Local mode is explicitly selected;
 no trading or configuration mutation route is exposed. PAPER remains mandatory
