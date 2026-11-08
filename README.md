@@ -25,6 +25,8 @@ Piattaforma indipendente **crypto-only**, progettata per operatività continua 2
 | Lettura portafoglio cached | Implementata |
 | Mercati: venue e ticker | Implementati in sola lettura |
 | Aggiornamento ticker dashboard | Ogni 15 secondi mentre la pagina Mercati è visibile |
+| Monitoraggio bot e controller | Implementato in sola lettura |
+| Monitoraggio posizioni aperte | Implementato in sola lettura, refresh 15 secondi nella pagina Operazioni |
 | Risk Gateway per ordini PAPER | Base iniziale, da collegare al motore |
 | Esecuzione PAPER Hummingbot | Non ancora abilitata |
 | TradingAgents | Non ancora integrato |
