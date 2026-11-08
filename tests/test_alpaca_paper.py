@@ -67,6 +67,10 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(AlpacaError, "no_long_position_to_sell"):
             self.client.submit_market_order("BTC/USD", "sell", qty=0.001)
 
+    def test_buy_requires_usd_notional_to_enforce_cap(self):
+        with self.assertRaisesRegex(AlpacaError, "buy_orders_require_usd_notional"):
+            self.client.submit_market_order("BTC/USD", "buy", qty=1)
+
     def test_missing_credentials_fail_closed(self):
         client = AlpacaPaperClient(AlpacaPaperConfig("", ""))
         with self.assertRaisesRegex(AlpacaError, "alpaca_credentials_missing"):
