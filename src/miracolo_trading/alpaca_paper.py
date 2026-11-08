@@ -108,6 +108,10 @@ class AlpacaPaperClient:
             raise AlpacaError("side_not_allowed", 400)
         if (notional is None) == (qty is None):
             raise AlpacaError("provide_exactly_one_of_notional_or_qty", 400)
+        if side == "buy" and notional is None:
+            raise AlpacaError("buy_orders_require_usd_notional", 400)
+        if side == "sell" and qty is None:
+            raise AlpacaError("sell_orders_require_position_quantity", 400)
         try:
             amount = float(notional if notional is not None else qty)
         except (TypeError, ValueError):
