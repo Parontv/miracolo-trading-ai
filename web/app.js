@@ -299,10 +299,10 @@ async function loadActivity() {
   const positionsState = document.querySelector("#positions-state");
   botsState.textContent = "Caricamento";
   positionsState.textContent = "Caricamento";
-  const base = \`/api/condor/servers/\${encodeURIComponent(server)}\`;
+  const base = `/api/condor/servers/${encodeURIComponent(server)}`;
   const results = await Promise.allSettled([
-    apiGet(\`\${base}/bots\`),
-    apiGet(\`\${base}/positions\`)
+    apiGet(`${base}/bots`),
+    apiGet(`${base}/positions`)
   ]);
 
   if (results[0].status === "fulfilled") {
@@ -324,18 +324,18 @@ async function loadActivity() {
       const meta = document.createElement("div");
       meta.className = "activity-meta";
       const status = document.createElement("span");
-      status.className = \`status-chip status-\${String(bot.status || "unknown").toLowerCase()}\`;
+      status.className = `status-chip status-${String(bot.status || "unknown").toLowerCase()}`;
       status.textContent = bot.status || "unknown";
       const pnl = document.createElement("strong");
-      pnl.textContent = \`PnL \${formatMoney(bot.pnl)}\`;
+      pnl.textContent = `PnL ${formatMoney(bot.pnl)}`;
       meta.append(status, pnl);
       card.append(info, meta);
       botsBox.append(card);
     }
-    botsState.textContent = \`\${bots.length} bot\`;
+    botsState.textContent = `${bots.length} bot`;
     botsState.classList.remove("muted");
   } else {
-    showMessage(botsBox, \`Stato bot non disponibile: \${results[0].reason.message}\`);
+    showMessage(botsBox, `Stato bot non disponibile: ${results[0].reason.message}`);
     botsState.textContent = "Errore";
   }
 
@@ -359,18 +359,18 @@ async function loadActivity() {
       const meta = document.createElement("div");
       meta.className = "activity-meta";
       const amount = document.createElement("span");
-      amount.textContent = \`Qtà \${Number(position.amount || 0).toLocaleString("it-IT", { maximumFractionDigits: 8 })}\`;
+      amount.textContent = `Qtà ${Number(position.amount || 0).toLocaleString("it-IT", { maximumFractionDigits: 8 })}`;
       const pnl = document.createElement("strong");
-      pnl.textContent = \`uPnL \${formatMoney(position.unrealized_pnl)}\`;
+      pnl.textContent = `uPnL ${formatMoney(position.unrealized_pnl)}`;
       pnl.className = Number(position.unrealized_pnl || 0) >= 0 ? "positive" : "negative";
       meta.append(amount, pnl);
       row.append(info, meta);
       positionsBox.append(row);
     }
-    positionsState.textContent = \`\${positions.length} posizioni\`;
+    positionsState.textContent = `${positions.length} posizioni`;
     positionsState.classList.remove("muted");
   } else {
-    showMessage(positionsBox, \`Posizioni non disponibili: \${results[1].reason.message}\`);
+    showMessage(positionsBox, `Posizioni non disponibili: ${results[1].reason.message}`);
     positionsState.textContent = "Errore";
   }
 }
@@ -383,7 +383,7 @@ async function loadActivityServers() {
     for (const server of servers) {
       const option = document.createElement("option");
       option.value = server.name;
-      option.textContent = \`\${server.name} · \${server.online ? "online" : "offline"}\`;
+      option.textContent = `${server.name} · ${server.online ? "online" : "offline"}`;
       select.append(option);
     }
     const preferred = servers.find((server) => server.is_default) || servers.find((server) => server.online) || servers[0];
@@ -400,8 +400,8 @@ async function loadActivityServers() {
     option.value = "";
     option.textContent = "Condor non collegato";
     select.append(option);
-    showMessage(document.querySelector("#bot-list"), \`Condor non disponibile: \${error.message}\`);
-    showMessage(document.querySelector("#position-list"), \`Condor non disponibile: \${error.message}\`);
+    showMessage(document.querySelector("#bot-list"), `Condor non disponibile: ${error.message}`);
+    showMessage(document.querySelector("#position-list"), `Condor non disponibile: ${error.message}`);
   }
 }
 
