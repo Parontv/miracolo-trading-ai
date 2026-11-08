@@ -37,29 +37,29 @@
       <section class="view active" id="view-dashboard">
         <div class="section-heading"><div><h2>Stato del sistema</h2><p>Controllo rapido dell'operatività crypto.</p></div><span class="tag">CRYPTO ONLY · 24/7 TARGET</span></div>
         <div class="metric-grid">
-          <article class="metric"><span>Valore portafoglio</span><strong id="metric-portfolio">--</strong><small id="metric-portfolio-note">In attesa del collegamento exchange</small></article>
-          <article class="metric"><span>Posizioni aperte</span><strong id="metric-positions">--</strong><small id="metric-positions-note">Dato non disponibile</small></article>
-          <article class="metric"><span>P&amp;L non realizzato</span><strong id="metric-pnl">--</strong><small id="metric-pnl-note">Dato non disponibile</small></article>
-          <article class="metric"><span>Bot attivi</span><strong id="metric-bots">--</strong><small id="metric-bots-note">Dato non disponibile</small></article>
+          <article class="metric"><span>Equity simulata PAPER</span><strong id="metric-portfolio">--</strong><small id="metric-portfolio-note">Capitale virtuale browser</small></article>
+          <article class="metric"><span>Posizioni PAPER</span><strong id="metric-positions">--</strong><small id="metric-positions-note">Simulazioni aperte</small></article>
+          <article class="metric"><span>P&amp;L simulato</span><strong id="metric-pnl">--</strong><small id="metric-pnl-note">Risultato non realizzato</small></article>
+          <article class="metric"><span>Bot browser</span><strong id="metric-bots">0</strong><small id="metric-bots-note">Si ferma con la pagina</small></article>
         </div>
         <div class="content-grid">
-          <article class="panel"><div class="panel-title"><div><h3>Motore di esecuzione</h3><p>Hummingbot</p></div><span class="pill muted" id="engine-status">In attesa del backend</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime non disponibile</strong><p>Qui vedrai stato del bot, exchange, connettore e ultima sincronizzazione.</p></div></article>
-          <article class="panel"><div class="panel-title"><div><h3>Analisi AI</h3><p>TradingAgents</p></div><span class="pill muted">Disattivato</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Analisi non avviata</strong><p>Le analisi saranno consultive. L'AI non potrà inviare ordini direttamente.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Motore browser PAPER</h3><p>Binance public market data</p></div><span class="pill muted" id="engine-status">Bot browser · avvio manuale</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Simulazione nella pagina web</strong><p>Avvia il bot dalla sezione Strategie. Quando chiudi la pagina, il monitoraggio si ferma.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Strategia tecnica</h3><p>EMA 9/21 + RSI 14</p></div><span class="pill muted">Sperimentale</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Segnali consultivi e PAPER</strong><p>La strategia simula posizioni spot senza leva. Non invia ordini all’exchange.</p></div></article>
         </div>
         <article class="panel condor-optional"><div class="panel-title"><div><h3>Server Condor</h3><p>Integrazione server opzionale, non necessaria per il bot browser PAPER</p></div><button class="refresh-button" id="refresh-servers" type="button">Aggiorna</button></div><div id="condor-servers" class="server-list"><p class="muted">Lettura server in corso…</p></div></article>
         <article class="panel condor-optional"><div class="panel-title"><div><h3>Portafoglio server</h3><p id="portfolio-server-label">Seleziona un server per leggere i saldi</p></div><span class="pill muted" id="portfolio-state">Non selezionato</span></div><div id="portfolio-content" class="empty-row">I dati verranno caricati dall'API Condor, senza forzare aggiornamenti sull'exchange.</div></article>
-        <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Nessun evento registrato. Gli eventi appariranno dopo il collegamento del runtime.</div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Il registro degli eventi del bot è disponibile nella sezione Strategie.</div></article>
       </section>
 
       <section class="view" id="view-markets">
         <div class="section-heading"><div><h2>Mercati crypto</h2><p>Prezzi pubblici Binance, aggiornati mentre la pagina è attiva.</p></div><span class="tag">FEED PUBBLICO</span></div>
         <article class="panel"><div class="panel-title"><div><h3>Watchlist browser</h3><p>Coppie monitorate dal bot PAPER</p></div><span class="pill muted">BTC · ETH · QNT</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot dalla sezione Strategie per collegare i dati live.</p></div></article>
-        <article class="panel market-controls">
+        <article class="panel market-controls condor-optional">
           <label>Server Condor<select id="market-server"><option value="">Caricamento server…</option></select></label>
           <label>Exchange / venue<select id="market-connector" disabled><option value="">Seleziona un server</option></select></label>
           <button class="refresh-button" id="refresh-markets" type="button">Aggiorna mercati</button>
         </article>
-        <article class="panel"><div class="panel-title"><div><h3>Panoramica ticker</h3><p id="market-updated">Dati non ancora caricati</p></div><span class="pill muted" id="market-state">In attesa</span></div>
+        <article class="panel condor-optional"><div class="panel-title"><div><h3>Panoramica ticker</h3><p id="market-updated">Dati non ancora caricati</p></div><span class="pill muted" id="market-state">In attesa</span></div>
           <div id="market-tickers" class="ticker-table"><p class="muted">Collega Condor per caricare prezzi e volumi.</p></div>
         </article>
       </section>
@@ -97,13 +97,13 @@
         <div class="section-heading"><div><h2>Operazioni PAPER</h2><p>Posizioni simulate e storico salvato nel browser.</p></div><span class="tag">NESSUN ORDINE REALE</span></div>
         <article class="panel"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Valore e livelli di protezione</p></div></div><div id="browser-position-list" class="browser-list"><p class="muted">Nessuna posizione PAPER aperta.</p></div></article>
         <article class="panel"><div class="panel-title"><div><h3>Storico operazioni</h3><p>Risultati simulati</p></div></div><div id="browser-trade-list" class="browser-list"><p class="muted">Nessuna operazione simulata.</p></div></article>
-        <article class="panel activity-controls">
+        <article class="panel activity-controls condor-optional">
           <label>Server<select id="activity-server"><option value="">Caricamento server…</option></select></label>
           <button class="refresh-button" id="refresh-activity" type="button">Aggiorna stato</button>
         </article>
         <div class="content-grid">
-          <article class="panel"><div class="panel-title"><div><h3>Bot</h3><p>Stato e strategia</p></div><span class="pill muted" id="bots-state">In attesa</span></div><div id="bot-list" class="activity-list"><p class="muted">Nessun dato caricato.</p></div></article>
-          <article class="panel"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Executor e controller</p></div><span class="pill muted" id="positions-state">In attesa</span></div><div id="position-list" class="activity-list"><p class="muted">Nessun dato caricato.</p></div></article>
+          <article class="panel condor-optional"><div class="panel-title"><div><h3>Bot</h3><p>Stato e strategia</p></div><span class="pill muted" id="bots-state">In attesa</span></div><div id="bot-list" class="activity-list"><p class="muted">Nessun dato caricato.</p></div></article>
+          <article class="panel condor-optional"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Executor e controller</p></div><span class="pill muted" id="positions-state">In attesa</span></div><div id="position-list" class="activity-list"><p class="muted">Nessun dato caricato.</p></div></article>
         </div>
       </section>
       <section class="view" id="view-risk"><div class="section-heading"><div><h2>Gestione del rischio</h2><p>Regole applicate prima di inoltrare ogni ordine.</p></div></div><div class="metric-grid"><article class="metric"><span>Modalità</span><strong class="small-value">PAPER</strong><small>LIVE disabilitato</small></article><article class="metric"><span>Asset consentiti</span><strong class="small-value">Crypto</strong><small>Azioni escluse</small></article><article class="metric"><span>Stop loss</span><strong class="small-value">Richiesto</strong><small>Per ogni posizione</small></article><article class="metric"><span>Autonomia AI</span><strong class="small-value">Analisi</strong><small>Nessun invio ordini</small></article></div></section>
