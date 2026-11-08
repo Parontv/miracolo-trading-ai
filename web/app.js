@@ -38,6 +38,9 @@ if (botWorkspace) {
   botWorkspace.open = true;
   section.append(botWorkspace);
 }
+for (const heading of dashboard.querySelectorAll(".section-heading")) {
+  if (heading.querySelector("h2")?.textContent.trim() === "Workspace operativo") heading.remove();
+}
 const links = [...document.querySelectorAll("[data-view]")];
 const views = [...document.querySelectorAll(".view")];
 const title = document.querySelector("#page-title");
