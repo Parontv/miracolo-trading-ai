@@ -12,7 +12,7 @@
   const STOP = 0.015, TARGET = 0.03, MAX_OPEN = 3;
   const $ = id => document.getElementById(id);
   const prices = {}, history = {}, changes = {};
-  let socket = null, retry = null, leaving = false, connecting = false;
+  let socket = null, retry = null, leaving = false, connecting = false, connectionGeneration = 0;
 
   function initial() {
     return { enabled: false, cash: START_CASH, positions: {}, trades: [], events: [] };
@@ -277,41 +277,49 @@
     }
   }
   function disconnect(retryConnection) {
+    connectionGeneration += 1;
+    connecting = false;
     if (retry) clearTimeout(retry);
     retry = null;
     if (socket) {
       const old = socket; socket = null;
-      old.onclose = null; old.onerror = null; old.close();
+      old.onopen = null; old.onmessage = null; old.onclose = null; old.onerror = null; old.close();
     }
     if (retryConnection && state.enabled && !document.hidden && !leaving) retry = setTimeout(connect, 5000);
   }
   async function connect() {
     if (!state.enabled || document.hidden || leaving || socket || connecting) return;
     connecting = true;
+    const generation = ++connectionGeneration;
     status("Caricamento storico prezzi…");
     try { await seed(); }
     catch (error) {
+      if (generation !== connectionGeneration || !state.enabled) return;
       connecting = false;
       status("Feed dati non disponibile: " + error.message, "error");
       addEvent("Feed dati non disponibile: " + error.message);
       disconnect(true); return;
     }
-    if (!state.enabled || document.hidden || leaving) { connecting = false; return; }
+    if (generation !== connectionGeneration || !state.enabled || document.hidden || leaving) { if (generation === connectionGeneration) connecting = false; return; }
     try {
-      socket = new WebSocket(wsUrl);
-      socket.onopen = () => {
+      const current = new WebSocket(wsUrl);
+      socket = current;
+      current.onopen = () => {
+        if (generation !== connectionGeneration || socket !== current || !state.enabled) { current.close(); return; }
         connecting = false;
         status("Bot attivo · PAPER", "online");
         addEvent("Feed Binance collegato. Monitoraggio avviato.");
       };
-      socket.onmessage = event => onMessage(event.data);
-      socket.onerror = () => status("Connessione dati instabile", "error");
-      socket.onclose = () => {
+      current.onmessage = event => { if (generation === connectionGeneration && socket === current && state.enabled) onMessage(event.data); };
+      current.onerror = () => { if (generation === connectionGeneration && socket === current && state.enabled) status("Connessione dati instabile", "error"); };
+      current.onclose = () => {
+        if (generation !== connectionGeneration || socket !== current) return;
         socket = null;
         connecting = false;
         if (state.enabled && !document.hidden && !leaving) { status("Feed interrotto · riconnessione…"); disconnect(true); }
       };
     } catch (error) {
+      if (generation !== connectionGeneration || !state.enabled) return;
       socket = null; connecting = false;
       status("WebSocket non disponibile: " + error.message, "error"); disconnect(true);
     }
