@@ -281,3 +281,137 @@ setInterval(() => {
     loadMarketTickers();
   }
 }, 15000);
+
+
+function formatMoney(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toLocaleString("it-IT", {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }) : "--";
+}
+
+async function loadActivity() {
+  const server = document.querySelector("#activity-server").value;
+  if (!server) return;
+  const botsBox = document.querySelector("#bot-list");
+  const positionsBox = document.querySelector("#position-list");
+  const botsState = document.querySelector("#bots-state");
+  const positionsState = document.querySelector("#positions-state");
+  botsState.textContent = "Caricamento";
+  positionsState.textContent = "Caricamento";
+  const base = \`/api/condor/servers/\${encodeURIComponent(server)}\`;
+  const results = await Promise.allSettled([
+    apiGet(\`\${base}/bots\`),
+    apiGet(\`\${base}/positions\`)
+  ]);
+
+  if (results[0].status === "fulfilled") {
+    const data = results[0].value;
+    const bots = Array.isArray(data.bots) ? data.bots : [];
+    botsBox.replaceChildren();
+    if (!bots.length) showMessage(botsBox, data.server_online === false
+      ? "Server Hummingbot offline o non raggiungibile."
+      : "Nessun bot registrato su questo server.");
+    for (const bot of bots) {
+      const card = document.createElement("div");
+      card.className = "activity-row";
+      const info = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = bot.name || bot.bot_name || bot.id || "Bot";
+      const detail = document.createElement("small");
+      detail.textContent = [bot.connector, bot.trading_pair, bot.controller_type].filter(Boolean).join(" · ") || "Dettagli strategia non disponibili";
+      info.append(name, detail);
+      const meta = document.createElement("div");
+      meta.className = "activity-meta";
+      const status = document.createElement("span");
+      status.className = \`status-chip status-\${String(bot.status || "unknown").toLowerCase()}\`;
+      status.textContent = bot.status || "unknown";
+      const pnl = document.createElement("strong");
+      pnl.textContent = \`PnL \${formatMoney(bot.pnl)}\`;
+      meta.append(status, pnl);
+      card.append(info, meta);
+      botsBox.append(card);
+    }
+    botsState.textContent = \`\${bots.length} bot\`;
+    botsState.classList.remove("muted");
+  } else {
+    showMessage(botsBox, \`Stato bot non disponibile: \${results[0].reason.message}\`);
+    botsState.textContent = "Errore";
+  }
+
+  if (results[1].status === "fulfilled") {
+    const data = results[1].value;
+    const positions = [
+      ...(Array.isArray(data.executor_positions) ? data.executor_positions : []),
+      ...(Array.isArray(data.bot_positions) ? data.bot_positions : [])
+    ];
+    positionsBox.replaceChildren();
+    if (!positions.length) showMessage(positionsBox, "Nessuna posizione aperta rilevata.");
+    for (const position of positions) {
+      const row = document.createElement("div");
+      row.className = "activity-row";
+      const info = document.createElement("div");
+      const pair = document.createElement("strong");
+      pair.textContent = position.trading_pair || "Coppia non indicata";
+      const detail = document.createElement("small");
+      detail.textContent = [position.connector_name, position.position_side, position.source_name || position.source].filter(Boolean).join(" · ");
+      info.append(pair, detail);
+      const meta = document.createElement("div");
+      meta.className = "activity-meta";
+      const amount = document.createElement("span");
+      amount.textContent = \`Qtà \${Number(position.amount || 0).toLocaleString("it-IT", { maximumFractionDigits: 8 })}\`;
+      const pnl = document.createElement("strong");
+      pnl.textContent = \`uPnL \${formatMoney(position.unrealized_pnl)}\`;
+      pnl.className = Number(position.unrealized_pnl || 0) >= 0 ? "positive" : "negative";
+      meta.append(amount, pnl);
+      row.append(info, meta);
+      positionsBox.append(row);
+    }
+    positionsState.textContent = \`\${positions.length} posizioni\`;
+    positionsState.classList.remove("muted");
+  } else {
+    showMessage(positionsBox, \`Posizioni non disponibili: \${results[1].reason.message}\`);
+    positionsState.textContent = "Errore";
+  }
+}
+
+async function loadActivityServers() {
+  const select = document.querySelector("#activity-server");
+  try {
+    const servers = await apiGet("/api/condor/servers");
+    select.replaceChildren();
+    for (const server of servers) {
+      const option = document.createElement("option");
+      option.value = server.name;
+      option.textContent = \`\${server.name} · \${server.online ? "online" : "offline"}\`;
+      select.append(option);
+    }
+    const preferred = servers.find((server) => server.is_default) || servers.find((server) => server.online) || servers[0];
+    if (preferred) {
+      select.value = preferred.name;
+      await loadActivity();
+    } else {
+      showMessage(document.querySelector("#bot-list"), "Nessun server Condor configurato.");
+      showMessage(document.querySelector("#position-list"), "Nessun server Condor configurato.");
+    }
+  } catch (error) {
+    select.replaceChildren();
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Condor non collegato";
+    select.append(option);
+    showMessage(document.querySelector("#bot-list"), \`Condor non disponibile: \${error.message}\`);
+    showMessage(document.querySelector("#position-list"), \`Condor non disponibile: \${error.message}\`);
+  }
+}
+
+document.querySelector("#activity-server")?.addEventListener("change", loadActivity);
+document.querySelector("#refresh-activity")?.addEventListener("click", loadActivity);
+loadActivityServers();
+
+setInterval(() => {
+  const activityView = document.querySelector("#view-activity");
+  if (!document.hidden && activityView?.classList.contains("active")) {
+    loadActivity();
+  }
+}, 15000);
