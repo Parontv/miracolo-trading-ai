@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f7fb">
+  <meta name="theme-color" content="#0b111b">
   <meta name="description" content="Miracolo Trading AI, pannello di controllo crypto.">
   <title>Miracolo Trading AI</title>
   <link rel="stylesheet" href="./styles.css">
@@ -13,9 +13,7 @@
     <aside class="sidebar" aria-label="Navigazione principale">
       <a class="brand" href="#dashboard"><span class="brand-mark">M</span><span>Miracolo <small>TRADING AI</small></span></a>
       <nav id="navigation">
-        <a class="nav-link active" href="#dashboard" data-view="dashboard">Panoramica</a>
-        <a class="nav-link" href="#markets" data-view="markets">Mercati</a>
-        <a class="nav-link" href="#strategies" data-view="strategies">Strategie</a>
+        <a class="nav-link active" href="#dashboard" data-view="dashboard">Control Room</a>
         <a class="nav-link" href="#activity" data-view="activity">Operazioni</a>
         <a class="nav-link" href="#risk" data-view="risk">Gestione rischio</a>
         <a class="nav-link" href="#settings" data-view="settings">Impostazioni</a>
@@ -25,7 +23,7 @@
 
     <main class="main">
       <header class="topbar">
-        <div><p class="eyebrow">CONTROL ROOM</p><h1 id="page-title">Panoramica</h1></div>
+        <div><p class="eyebrow">CONTROL ROOM</p><h1 id="page-title">Control Room</h1></div>
         <div class="top-status"><span class="mode">PAPER</span><span class="status"><i class="dot offline" id="connection-dot"></i><span id="connection-status">Verifica connessione…</span></span></div>
       </header>
 
@@ -60,9 +58,10 @@
         <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Il registro degli eventi del bot è disponibile nella sezione Strategie.</div></article>
       </section>
 
-      <section class="view" id="view-markets">
-        <div class="section-heading"><div><h2>Mercati crypto</h2><p>Prezzi pubblici Binance, aggiornati mentre la pagina è attiva.</p></div><span class="tag">FEED PUBBLICO</span></div>
-        <article class="panel"><div class="panel-title"><div><h3>Watchlist browser</h3><p>Coppie monitorate dal bot PAPER</p></div><span class="pill muted">BTC · ETH · QNT</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot dalla sezione Strategie per collegare i dati live.</p></div></article>
+      <div class="section-heading"><div><h2>Mercati, strategie e monitoraggio</h2><p>Un’unica postazione: dati, segnali, bot e portafoglio simulato.</p></div><span class="tag">CRYPTO · PAPER</span></div>
+        
+        <details class="workspace-section" open><summary><span>Mercati e watchlist</span><small>Binance · BTC · ETH · QNT</small></summary>
+      <article class="panel"><div class="panel-title"><div><h3>Watchlist browser</h3><p>Coppie monitorate dal bot PAPER</p></div><span class="pill muted">BTC · ETH · QNT</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot dalla sezione Strategie per collegare i dati live.</p></div></article>
         <article class="panel market-controls condor-optional">
           <label>Server Condor<select id="market-server"><option value="">Caricamento server…</option></select></label>
           <label>Exchange / venue<select id="market-connector" disabled><option value="">Seleziona un server</option></select></label>
@@ -71,9 +70,9 @@
         <article class="panel condor-optional"><div class="panel-title"><div><h3>Panoramica ticker</h3><p id="market-updated">Dati non ancora caricati</p></div><span class="pill muted" id="market-state">In attesa</span></div>
           <div id="market-tickers" class="ticker-table"><p class="muted">Collega Condor per caricare prezzi e volumi.</p></div>
         </article>
-      </section>
-      <section class="view" id="view-strategies">
-        <div class="section-heading"><div><h2>Bot crypto browser</h2><p>Il motore gira nel browser e si ferma quando la pagina viene chiusa o messa in background.</p></div><span class="tag">PAPER · SESSIONE WEB</span></div>
+
+      <details class="workspace-section" open><summary><span>Strategie e bot</span><small>Motore browser PAPER</small></summary>
+        
         <article class="panel browser-bot-panel">
           <div class="panel-title"><div><h3>Motore di simulazione</h3><p>Prezzi pubblici Binance · candele 1 minuto</p></div><span class="pill muted" id="browser-bot-status">Pronto · avvio manuale</span></div>
           <div class="browser-actions"><button class="refresh-button" id="browser-start" type="button">Avvia bot PAPER</button><button class="refresh-button" id="browser-stop" type="button" disabled>Ferma bot</button></div>
@@ -101,7 +100,7 @@
         
         
         <article class="panel"><div class="panel-title"><div><h3>Eventi del bot</h3><p>Connessione, segnali e decisioni</p></div></div><div id="browser-event-list" class="browser-list"><p class="muted">Nessun evento registrato.</p></div></article>
-      </section>
+      </details>
       <section class="view" id="view-activity">
         <div class="section-heading"><div><h2>Operazioni PAPER</h2><p>Posizioni simulate e storico salvato nel browser.</p></div><span class="tag">NESSUN ORDINE REALE</span></div>
         <article class="panel"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Valore e livelli di protezione</p></div></div><div id="browser-position-list" class="browser-list"><p class="muted">Nessuna posizione PAPER aperta.</p></div></article>
