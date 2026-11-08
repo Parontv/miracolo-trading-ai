@@ -15,15 +15,21 @@ class FakeCondor:
     def portfolio(self, name):
         return {"balances": []}
 
+    def market_venues(self, name):
+        return {"venues": [{"name": "binance", "hummingbot_market_data": True}]}
+
+    def market_tickers(self, name, connector):
+        return {"connector": connector, "tickers": []}
+
 
 class HttpApiTests(unittest.TestCase):
-    def request(self, path, method="GET"):
+    def request(self, path, method="GET", query=""):
         captured = {}
         def start_response(status, headers):
             captured["status"] = status
             captured["headers"] = dict(headers)
         app = create_app(FakeCondor())
-        environ = {"REQUEST_METHOD": method, "PATH_INFO": path,
+        environ = {"REQUEST_METHOD": method, "PATH_INFO": path, "QUERY_STRING": query,
                    "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0"}
         body = b"".join(app(environ, start_response))
         return captured, json.loads(body)
@@ -58,6 +64,19 @@ class HttpApiTests(unittest.TestCase):
                              "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0"}, start_response))
         self.assertEqual(captured["status"], "503 Service Unavailable")
         self.assertEqual(json.loads(body)["reason"], "missing_api_token")
+
+    def test_reads_market_venues_and_tickers(self):
+        _, venues = self.request("/api/condor/servers/paper/market/venues")
+        _, tickers = self.request(
+            "/api/condor/servers/paper/market/tickers", query="connector=binance"
+        )
+        self.assertTrue(venues["venues"][0]["hummingbot_market_data"])
+        self.assertEqual(tickers["connector"], "binance")
+
+    def test_tickers_require_connector(self):
+        response, body = self.request("/api/condor/servers/paper/market/tickers")
+        self.assertEqual(response["status"], "400 Bad Request")
+        self.assertEqual(body["error"], "connector_required")
 
     def test_unknown_route_is_not_found(self):
         response, _ = self.request("/api/orders")
