@@ -274,3 +274,10 @@ document.querySelector("#market-server")?.addEventListener("change", loadMarketV
 document.querySelector("#market-connector")?.addEventListener("change", loadMarketTickers);
 document.querySelector("#refresh-markets")?.addEventListener("click", loadMarketTickers);
 loadMarketServers();
+
+setInterval(() => {
+  const marketView = document.querySelector("#view-markets");
+  if (!document.hidden && marketView?.classList.contains("active")) {
+    loadMarketTickers();
+  }
+}, 15000);
