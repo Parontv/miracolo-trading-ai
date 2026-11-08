@@ -65,7 +65,7 @@ class CondorReadOnlyTests(unittest.TestCase):
             Response(b'[{"name":"paper","online":true}]'),
         ]
         client = CondorReadOnlyClient(CondorReadOnlyConfig(
-            "http://127.0.0.1:8088", auth_mode="local"
+            "http://127.0.0.1:8088", token="expired-jwt", auth_mode="local"
         ))
         self.assertEqual(client.servers(), [{"name": "paper", "online": True}])
         self.assertEqual(mocked.call_count, 3)
