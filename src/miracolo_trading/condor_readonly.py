@@ -125,3 +125,11 @@ class CondorReadOnlyClient:
         return self._get(
             f"/api/v1/servers/{quote(name, safe='')}/market/tickers?{query}"
         )
+
+    def bots(self, name: str):
+        """Read bot and controller status without issuing control commands."""
+        return self._get(f"/api/v1/servers/{quote(name, safe='')}/bots")
+
+    def positions(self, name: str):
+        """Read consolidated open-position snapshots."""
+        return self._get(f"/api/v1/servers/{quote(name, safe='')}/positions")
