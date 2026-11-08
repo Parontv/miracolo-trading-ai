@@ -1,6 +1,8 @@
 const links = [...document.querySelectorAll("[data-view]")];
 const views = [...document.querySelectorAll(".view")];
 const title = document.querySelector("#page-title");
+const staticPreview = ["raw.githack.com", "rawcdn.githack.com"].includes(location.hostname);
+const backendMissingMessage = "Questa è un'anteprima statica Githack: il dominio pubblica HTML/CSS/JS ma non ospita l'API Python /api. Il backend Miracolo e Condor devono essere avviati su un host e collegati tramite proxy autenticato.";
 
 function navigate(link) {
   const name = link.dataset.view;
@@ -20,6 +22,7 @@ async function apiGet(path) {
   const response = await fetch(path, { headers: { Accept: "application/json" }, cache: "no-store" });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 404 && staticPreview) throw new Error(backendMissingMessage);
     const reason = body.reason || body.detail || `HTTP ${response.status}`;
     throw new Error(String(reason));
   }
@@ -38,11 +41,15 @@ async function refreshConnection() {
     document.querySelector("#connection-dot")?.classList.remove("offline");
     engine.textContent = "Backend disponibile · Condor in verifica";
     engine.classList.remove("muted");
-  } catch {
-    status.textContent = "Backend non raggiungibile";
+  } catch (error) {
+    status.textContent = staticPreview ? "Anteprima statica · backend non collegato" : "Backend non raggiungibile";
     status.classList.remove("online");
     document.querySelector("#connection-dot")?.classList.add("offline");
     notice.hidden = false;
+    if (staticPreview) {
+      notice.querySelector("strong").textContent = "Anteprima grafica בלבד";
+      notice.querySelector("span").textContent = backendMissingMessage;
+    }
     engine.textContent = "In attesa del backend";
     engine.classList.add("muted");
   }
@@ -142,13 +149,17 @@ async function loadServers() {
     document.querySelector("#engine-status").classList.add("muted");
     const notice = document.querySelector("#connection-notice");
     notice.hidden = false;
-    notice.querySelector("strong").textContent = "Connessione Condor non disponibile";
-    notice.querySelector("span").textContent = error.message === "missing_api_token"
+    notice.querySelector("strong").textContent = staticPreview ? "Backend non pubblicato su Githack" : "Connessione Condor non disponibile";
+    notice.querySelector("span").textContent = staticPreview
+      ? backendMissingMessage
+      : error.message === "missing_api_token"
       ? "Autenticazione Condor non configurata. Inserire nel backend un JWT di sessione Condor; mai nel browser."
       : `Condor non raggiungibile: ${error.message}`;
-    showMessage(container, error.message === "missing_api_token"
-      ? "Autenticazione Condor non configurata. Inserire nel backend un JWT di sessione Condor; mai nel browser."
-      : `Condor non raggiungibile: ${error.message}`);
+    showMessage(container, staticPreview
+      ? backendMissingMessage
+      : error.message === "missing_api_token"
+        ? "Autenticazione Condor non configurata. Inserire nel backend un JWT di sessione Condor; mai nel browser."
+        : `Condor non raggiungibile: ${error.message}`);
   }
 }
 
