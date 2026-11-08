@@ -46,6 +46,8 @@
           <article class="panel"><div class="panel-title"><div><h3>Motore di esecuzione</h3><p>Hummingbot</p></div><span class="pill muted" id="engine-status">In attesa del backend</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime non disponibile</strong><p>Qui vedrai stato del bot, exchange, connettore e ultima sincronizzazione.</p></div></article>
           <article class="panel"><div class="panel-title"><div><h3>Analisi AI</h3><p>TradingAgents</p></div><span class="pill muted">Disattivato</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Analisi non avviata</strong><p>Le analisi saranno consultive. L'AI non potrà inviare ordini direttamente.</p></div></article>
         </div>
+        <article class="panel"><div class="panel-title"><div><h3>Server Condor</h3><p>Stato dei server Hummingbot autorizzati</p></div><button class="refresh-button" id="refresh-servers" type="button">Aggiorna</button></div><div id="condor-servers" class="server-list"><p class="muted">Lettura server in corso…</p></div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Portafoglio server</h3><p id="portfolio-server-label">Seleziona un server per leggere i saldi</p></div><span class="pill muted" id="portfolio-state">Non selezionato</span></div><div id="portfolio-content" class="empty-row">I dati verranno caricati dall'API Condor, senza forzare aggiornamenti sull'exchange.</div></article>
         <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Nessun evento registrato. Gli eventi appariranno dopo il collegamento del runtime.</div></article>
       </section>
 
