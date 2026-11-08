@@ -1,13 +1,19 @@
 (() => {
   "use strict";
   const KEY = "miracolo.browser.paper.v1";
-  const WATCH = [
-    { s: "BTCUSDT", label: "BTC/USDT" },
-    { s: "ETHUSDT", label: "ETH/USDT" },
-    { s: "QNTUSDT", label: "QNT/USDT" }
+  const CANDIDATES = [
+    "BTCUSDT", "ETHUSDT", "QNTUSDT", "SOLUSDT", "BNBUSDT",
+    "XRPUSDT", "ADAUSDT", "DOGEUSDT", "LINKUSDT", "AVAXUSDT",
+    "LTCUSDT", "DOTUSDT", "BCHUSDT", "TRXUSDT", "SUIUSDT",
+    "NEARUSDT", "ATOMUSDT", "UNIUSDT", "APTUSDT", "ETCUSDT"
   ];
-  const streams = WATCH.map(x => x.s.toLowerCase() + "@kline_1m/" + x.s.toLowerCase() + "@ticker").join("/");
-  const wsUrl = "wss://data-stream.binance.vision/stream?streams=" + streams;
+  let WATCH = [];
+  const MIN_QUOTE_VOLUME = 2000000;
+  const MAX_WATCH = 15;
+  const wsUrl = () => {
+    const streams = WATCH.map(x => x.s.toLowerCase() + "@kline_1m/" + x.s.toLowerCase() + "@ticker").join("/");
+    return "wss://data-stream.binance.vision/stream?streams=" + streams;
+  };
   const START_CASH = 1000, ORDER_SIZE = 100, FEE = 0.001, SLIPPAGE = 0.0005;
   const STOP = 0.015, TARGET = 0.03, MAX_OPEN = 3;
   const $ = id => document.getElementById(id);
@@ -234,6 +240,41 @@
   }
   function renderAll() { renderMarkets(); renderMetrics(); renderPositions(); renderTrades(); renderEvents(); }
 
+  async function discoverMarkets() {
+    const query = encodeURIComponent(JSON.stringify(CANDIDATES));
+    const bases = ["https://data-api.binance.vision/api/v3/", "https://api.binance.com/api/v3/"];
+    let lastError;
+    for (const base of bases) {
+      try {
+        const [infoResponse, tickerResponse] = await Promise.all([
+          fetch(base + "exchangeInfo?symbols=" + query, { cache: "no-store" }),
+          fetch(base + "ticker/24hr?symbols=" + query, { cache: "no-store" })
+        ]);
+        if (!infoResponse.ok || !tickerResponse.ok) throw new Error("HTTP " + infoResponse.status + "/" + tickerResponse.status);
+        const info = await infoResponse.json(), tickers = await tickerResponse.json();
+        if (!Array.isArray(info.symbols) || !Array.isArray(tickers)) throw new Error("Risposta exchange non valida");
+        const volumes = new Map(tickers.map(t => [t.symbol, Number(t.quoteVolume)]));
+        const eligible = info.symbols
+          .filter(x => x.status === "TRADING" && x.quoteAsset === "USDT" && x.isSpotTradingAllowed !== false)
+          .map(x => ({ s: x.symbol, label: x.baseAsset + "/USDT", volume: volumes.get(x.symbol) || 0 }))
+          .filter(x => Number.isFinite(x.volume) && x.volume >= MIN_QUOTE_VOLUME)
+          .sort((a, b) => b.volume - a.volume);
+        const pinned = ["BTCUSDT", "ETHUSDT", "QNTUSDT"];
+        const selected = pinned.map(symbol => eligible.find(x => x.s === symbol)).filter(Boolean);
+        for (const item of eligible) {
+          if (selected.length >= MAX_WATCH) break;
+          if (!selected.some(x => x.s === item.s)) selected.push(item);
+        }
+        if (selected.length < 3) throw new Error("Meno di 3 coppie liquide disponibili");
+        WATCH = selected;
+        addEvent("Universo crypto aggiornato: " + WATCH.length + " coppie USDT liquide e abilitate su Binance Spot.");
+        renderMarkets();
+        return;
+      } catch (error) { lastError = error; }
+    }
+    throw new Error("Impossibile verificare l'universo Binance: " + (lastError?.message || "errore sconosciuto"));
+  }
+
   async function seed() {
     const endpoints = [
       "https://data-api.binance.vision/api/v3/klines",
@@ -295,7 +336,7 @@
     connecting = true;
     const generation = ++connectionGeneration;
     status("Caricamento storico prezzi…");
-    try { await seed(); }
+    try { await discoverMarkets(); await seed(); }
     catch (error) {
       if (generation !== connectionGeneration || !state.enabled) return;
       connecting = false;
@@ -305,7 +346,7 @@
     }
     if (generation !== connectionGeneration || !state.enabled || document.hidden || leaving) { if (generation === connectionGeneration) connecting = false; return; }
     try {
-      const current = new WebSocket(wsUrl);
+      const current = new WebSocket(wsUrl());
       socket = current;
       current.onopen = () => {
         if (generation !== connectionGeneration || socket !== current || !state.enabled) { current.close(); return; }
