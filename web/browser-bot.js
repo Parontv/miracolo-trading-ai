@@ -148,7 +148,11 @@
       const ch = document.createElement("span");
       ch.textContent = changes[item.s] === undefined ? "In attesa" : changes[item.s].toFixed(2) + "%";
       ch.className = changes[item.s] === undefined ? "muted" : changes[item.s] >= 0 ? "positive" : "negative";
-      row.append(name, px, ch); box.append(row);
+      const signal = document.createElement("small");
+      signal.id = "signal-" + item.s;
+      signal.className = "signal";
+      signal.textContent = "Indicatori in caricamento";
+      row.append(name, px, ch, signal); box.append(row);
     });
   }
   function renderMetrics() {
@@ -160,6 +164,18 @@
       $("browser-pnl").className = n >= 0 ? "positive" : "negative";
     }
     if ($("browser-open-count")) $("browser-open-count").textContent = String(openCount());
+    if ($("metric-portfolio")) $("metric-portfolio").textContent = money(equity());
+    if ($("metric-portfolio-note")) $("metric-portfolio-note").textContent = "Capitale virtuale iniziale " + money(START_CASH);
+    if ($("metric-positions")) $("metric-positions").textContent = String(openCount());
+    if ($("metric-positions-note")) $("metric-positions-note").textContent = "Posizioni simulate";
+    if ($("metric-pnl")) {
+      const value = floating();
+      $("metric-pnl").textContent = (value >= 0 ? "+" : "") + money(value);
+      $("metric-pnl").className = value >= 0 ? "positive" : "negative";
+    }
+    if ($("metric-pnl-note")) $("metric-pnl-note").textContent = "P&L PAPER non realizzato";
+    if ($("metric-bots")) $("metric-bots").textContent = state.enabled ? "1" : "0";
+    if ($("metric-bots-note")) $("metric-bots-note").textContent = state.enabled ? "Bot browser avviato" : "Bot fermo";
   }
   function renderPositions() {
     const box = $("browser-position-list"); if (!box) return;
