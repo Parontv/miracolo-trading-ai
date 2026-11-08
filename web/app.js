@@ -1,3 +1,43 @@
+// Build dedicated Market and Crypto Bot workspaces from the existing panels.
+const dashboard = document.querySelector("#view-dashboard");
+const activityView = document.querySelector("#view-activity");
+const navigation = document.querySelector("#navigation");
+const workspaceDetails = [...dashboard.querySelectorAll("details.workspace-section")];
+const marketWorkspace = workspaceDetails.find((item) => item.querySelector("summary")?.textContent.includes("Mercati"));
+const botWorkspace = workspaceDetails.find((item) => item.querySelector("summary")?.textContent.includes("Strategie"));
+function addWorkspaceView(id, label, description) {
+  const section = document.createElement("section");
+  section.className = "view";
+  section.id = `view-${id}`;
+  const heading = document.createElement("div");
+  heading.className = "section-heading";
+  const copy = document.createElement("div");
+  const h2 = document.createElement("h2");
+  h2.textContent = label;
+  const p = document.createElement("p");
+  p.textContent = description;
+  copy.append(h2, p);
+  heading.append(copy);
+  section.append(heading);
+  dashboard.before(section);
+  const link = document.createElement("a");
+  link.className = "nav-link";
+  link.href = `#${id}`;
+  link.dataset.view = id;
+  link.textContent = label;
+  navigation.insertBefore(link, navigation.querySelector('[data-view="activity"]'));
+  return section;
+}
+if (marketWorkspace) {
+  const section = addWorkspaceView("markets", "Mercati", "Prezzi e liquidità Binance Spot in tempo reale.");
+  marketWorkspace.open = true;
+  section.append(marketWorkspace);
+}
+if (botWorkspace) {
+  const section = addWorkspaceView("bot", "Crypto Bot", "Controllo del motore PAPER, segnali, posizioni e registro eventi.");
+  botWorkspace.open = true;
+  section.append(botWorkspace);
+}
 const links = [...document.querySelectorAll("[data-view]")];
 const views = [...document.querySelectorAll(".view")];
 const title = document.querySelector("#page-title");
