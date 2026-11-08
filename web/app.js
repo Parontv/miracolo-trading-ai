@@ -47,7 +47,7 @@ async function refreshConnection() {
     document.querySelector("#connection-dot")?.classList.add("offline");
     notice.hidden = false;
     if (staticPreview) {
-      notice.querySelector("strong").textContent = "Anteprima grafica בלבד";
+      notice.querySelector("strong").textContent = "Anteprima grafica";
       notice.querySelector("span").textContent = backendMissingMessage;
     }
     engine.textContent = "In attesa del backend";
