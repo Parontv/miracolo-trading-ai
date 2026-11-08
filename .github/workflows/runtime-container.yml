@@ -1,0 +1,23 @@
+name: Runtime container validation
+
+on:
+  pull_request:
+    branches: [integration/condor-foundation]
+  push:
+    branches: [feature/readonly-dashboard-api]
+
+jobs:
+  runtime-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Validate compose configuration
+        run: |
+          cp .env.runtime.example .env.runtime
+          docker compose -f compose.runtime.yml config --quiet
+      - name: Build runtime image
+        run: docker build -f Dockerfile.runtime -t miracolo-api:ci .
+      - name: Verify WSGI entrypoint
+        run: docker run --rm --network host --entrypoint python miracolo-api:ci -c "import wsgi; print('WSGI import OK')"
