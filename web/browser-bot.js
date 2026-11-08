@@ -12,7 +12,7 @@
   const STOP = 0.015, TARGET = 0.03, MAX_OPEN = 3;
   const $ = id => document.getElementById(id);
   const prices = {}, history = {}, changes = {};
-  let socket = null, retry = null, leaving = false;
+  let socket = null, retry = null, leaving = false, connecting = false;
 
   function initial() {
     return { enabled: false, cash: START_CASH, positions: {}, trades: [], events: [] };
@@ -243,8 +243,13 @@
           const response = await fetch(endpoint + "?symbol=" + item.s + "&interval=1m&limit=100", { cache: "no-store" });
           if (!response.ok) throw new Error("HTTP " + response.status);
           const rows = await response.json();
-          history[item.s] = rows.map(row => ({ time: Number(row[0]), close: Number(row[4]) }));
-          prices[item.s] = history[item.s][history[item.s].length - 1].close;
+          if (!Array.isArray(rows) || rows.length < 30) throw new Error("Storico insufficiente");
+          const candles = rows.map(row => ({ time: Number(row[0]), close: Number(row[4]) }));
+          if (candles.some(candle => !Number.isFinite(candle.time) || !Number.isFinite(candle.close) || candle.close <= 0)) {
+            throw new Error("Dati candela non validi");
+          }
+          history[item.s] = candles;
+          prices[item.s] = candles[candles.length - 1].close;
           lastError = null; break;
         } catch (error) { lastError = error; }
       }
@@ -281,26 +286,34 @@
     if (retryConnection && state.enabled && !document.hidden && !leaving) retry = setTimeout(connect, 5000);
   }
   async function connect() {
-    if (!state.enabled || document.hidden || leaving || socket) return;
+    if (!state.enabled || document.hidden || leaving || socket || connecting) return;
+    connecting = true;
     status("Caricamento storico prezzi…");
     try { await seed(); }
     catch (error) {
+      connecting = false;
       status("Feed dati non disponibile: " + error.message, "error");
       addEvent("Feed dati non disponibile: " + error.message);
       disconnect(true); return;
     }
-    if (!state.enabled || document.hidden || leaving) return;
+    if (!state.enabled || document.hidden || leaving) { connecting = false; return; }
     try {
       socket = new WebSocket(wsUrl);
-      socket.onopen = () => { status("Bot attivo · PAPER", "online"); addEvent("Feed Binance collegato. Monitoraggio avviato."); };
+      socket.onopen = () => {
+        connecting = false;
+        status("Bot attivo · PAPER", "online");
+        addEvent("Feed Binance collegato. Monitoraggio avviato.");
+      };
       socket.onmessage = event => onMessage(event.data);
       socket.onerror = () => status("Connessione dati instabile", "error");
       socket.onclose = () => {
         socket = null;
+        connecting = false;
         if (state.enabled && !document.hidden && !leaving) { status("Feed interrotto · riconnessione…"); disconnect(true); }
       };
     } catch (error) {
-      socket = null; status("WebSocket non disponibile: " + error.message, "error"); disconnect(true);
+      socket = null; connecting = false;
+      status("WebSocket non disponibile: " + error.message, "error"); disconnect(true);
     }
   }
   function start() {
