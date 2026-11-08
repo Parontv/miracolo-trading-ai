@@ -2,10 +2,10 @@
 
 Piattaforma indipendente **crypto-only**. La modalità operativa attuale è un bot PAPER eseguito nel browser: lavora mentre la pagina è aperta e si mette in pausa quando la pagina non è visibile o viene chiusa.
 
-> Stato: fondazione e integrazione read-only in sviluppo. La dashboard può leggere server, portafoglio e ticker Condor quando il runtime e l'autenticazione sono configurati. Non è ancora un sistema di esecuzione PAPER completo e non invia ordini LIVE.
+> Stato: bot browser PAPER in sviluppo, con feed pubblico e simulazione locale. L'integrazione Condor resta opzionale. Non vengono inviati ordini reali e LIVE resta disabilitato.
 
 ## Obiettivo operativo
-- Solo mercati crypto, 24 ore su 24 e 7 giorni su 7.
+- Solo mercati crypto; il bot browser lavora esclusivamente durante la sessione web aperta.
 - Condor è la base applicativa per dashboard, agenti e gestione operativa.
 - Hummingbot è il motore di esecuzione e gestione ordini.
 - TradingAgents è il livello di ricerca e proposta, non un esecutore.
@@ -73,7 +73,7 @@ In modalità Telegram usare \`CONDOR_AUTH_MODE=bearer\` e un JWT web-session val
 - Nessun agente AI può inviare ordini direttamente.
 - Le letture di portafoglio usano la cache Condor e non forzano refresh exchange.
 - Hummingbot API e Condor non devono essere esposti su Internet pubblico.
-- Per un runtime 24/7 serve un host persistente, rete privata, health checks e restart policy.
+- La modalità browser si arresta quando la pagina è nascosta o chiusa; non è un servizio 24/7.
 
 ## Runtime deployment
 
@@ -83,6 +83,7 @@ Per avviare API e interfaccia su un host Linux persistente con Condor locale, se
 \`\`\`bash
 python -m unittest discover -s tests -v
 node --check web/app.js
+node --check web/browser-bot.js
 \`\`\`
 
 GitHub Actions verifica anche il build frontend e gli import backend della revisione Condor fissata.
