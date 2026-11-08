@@ -41,3 +41,50 @@
 .text-link{display:inline-block;margin-top:4px;color:#176b61;font-size:12px;font-weight:700;text-decoration:none}
 .text-link:hover{text-decoration:underline}
 @media(max-width:640px){.alpaca-summary{grid-template-columns:1fr}}
+
+
+/* Miracolo dark control-room theme */
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#e6edf7;background:#0b111b}
+html,body{background:#0b111b;color:#e6edf7}
+body{background:radial-gradient(ellipse at 75% -15%,#16273a 0%,#0b111b 52%)}
+.sidebar{background:#0e1724;border-color:#1e2c3d}
+.brand{color:#eef4fc}.brand small{color:#8294aa}.brand-mark{background:#1b8b79}
+.nav-link{color:#a2b1c4}.nav-link:hover,.nav-link.active{background:#172b37;color:#70d8c2}
+.sidebar-bottom{border-color:#243246;color:#8393a8}
+.main{color:#e6edf7}
+.eyebrow,p,.status,.metric span,.metric small,.settings-list span,.muted,.browser-disclaimer{color:#91a1b6}
+h1,h2,h3,.metric strong,.settings-list strong,.activity-row strong,.browser-market-row strong,.browser-position-row strong{color:#e6edf7}
+.notice{background:#241f17;border-color:#54452a;color:#e6c78c}
+.notice span{color:#c6b58f}
+.metric,.panel{background:#111c2a;border-color:#26364a;box-shadow:0 8px 24px #0003}
+.metric{background:linear-gradient(145deg,#142234,#101a28)}
+.pill.muted{background:#202d3d;color:#aab9cb}
+.mode,.tag{background:#17362f;color:#7bdcc6}
+.tag{background:#1c2a3a;color:#a9bbd0}
+.empty-row,.empty-state,.server-row,.balance-row,.connector-block,.ticker-row,.activity-row,.browser-market-row,.browser-position-row,.browser-event-row,.settings-list>div{border-color:#26364a}
+.empty-icon{background:#19352f;color:#7bdcc6}
+.empty-state strong,.panel-title h3{color:#e6edf7}
+.refresh-button,.select-server{background:#172a39;border-color:#2d4558;color:#83ddc8}
+.refresh-button:hover,.select-server:hover{background:#203b4b}
+.market-controls select,.activity-controls select{background:#0d1724;border-color:#304258;color:#e6edf7}
+.positive{color:#65d6a5}.negative{color:#ff8c87}
+.status-chip{background:#202d3d;color:#b2c0d1}
+.status-running{background:#173a31;color:#76d9b4}
+.status-stopping{background:#3b301d;color:#e7bd70}
+.status-error,.status-failed{background:#432626;color:#ff9c98}
+.pill.online{background:#173a31;color:#76d9b4}.pill.error{background:#432626;color:#ff9c98}
+.alpaca-panel{background:linear-gradient(135deg,#132536,#10201f);border-color:#285248}
+.alpaca-summary>div{background:#0e1a27;border-color:#2a3b4e}
+.alpaca-summary strong{color:#e6edf7}.alpaca-summary small{color:#91a1b6}
+.alpaca-indicator{background:#d5a34d;box-shadow:0 0 0 4px #3c321f}
+.text-link{color:#7bdcc6}
+.workspace-section{margin:0 0 16px;border:1px solid #293b50;border-radius:13px;background:#0f1a28;overflow:hidden}
+.workspace-section>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 19px;cursor:pointer;background:#142235;color:#e6edf7;font-size:14px;font-weight:750}
+.workspace-section>summary::-webkit-details-marker{display:none}
+.workspace-section>summary:after{content:"＋";color:#7bdcc6;font-size:18px}
+.workspace-section[open]>summary:after{content:"−"}
+.workspace-section>summary small{margin-left:auto;color:#91a1b6;font-size:11px;font-weight:500}
+.workspace-section>.panel{margin:12px;border-color:#26384d}
+.workspace-section>.section-heading{padding:12px 16px}
+footer{color:#71839a}
+@media(max-width:640px){.workspace-section>summary{padding:14px;align-items:flex-start}.workspace-section>summary small{font-size:10px}.sidebar{background:#0e1724}}
