@@ -42,6 +42,15 @@
           <article class="metric"><span>P&amp;L simulato</span><strong id="metric-pnl">--</strong><small id="metric-pnl-note">Risultato non realizzato</small></article>
           <article class="metric"><span>Bot browser</span><strong id="metric-bots">0</strong><small id="metric-bots-note">Si ferma con la pagina</small></article>
         </div>
+        <article class="panel alpaca-panel">
+          <div class="panel-title"><div><h3>Alpaca Paper · esecuzione simulata</h3><p>Collegamento server protetto, separato dal simulatore browser</p></div><span class="pill muted" id="alpaca-status">Backend da configurare</span></div>
+          <div class="alpaca-summary">
+            <div><span class="alpaca-indicator"></span><strong>Modalità PAPER bloccata</strong><small>Nessun collegamento LIVE previsto</small></div>
+            <div><strong>BTC/USD · ETH/USD · QNT/USD</strong><small>Gli strumenti saranno abilitati solo dopo verifica disponibilità su Alpaca</small></div>
+          </div>
+          <p class="browser-disclaimer" id="alpaca-detail">Il backend Alpaca è stato aggiunto al progetto. Per collegarlo servono un runtime server con i segreti configurati e l’autenticazione della sessione web. Questa anteprima non invia ordini ad Alpaca.</p>
+          <a class="text-link" href="https://github.com/Parontv/miracolo-trading-ai/blob/feature/readonly-dashboard-api/docs/alpaca-paper.md" target="_blank" rel="noopener">Configurazione e stato integrazione</a>
+        </article>
         <div class="content-grid">
           <article class="panel"><div class="panel-title"><div><h3>Motore browser PAPER</h3><p>Binance public market data</p></div><span class="pill muted" id="engine-status">Bot browser · avvio manuale</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Simulazione nella pagina web</strong><p>Avvia il bot dalla sezione Strategie. Quando chiudi la pagina, il monitoraggio si ferma.</p></div></article>
           <article class="panel"><div class="panel-title"><div><h3>Strategia tecnica</h3><p>EMA 9/21 + RSI 14</p></div><span class="pill muted">Sperimentale</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Segnali consultivi e PAPER</strong><p>La strategia simula posizioni spot senza leva. Non invia ordini all’exchange.</p></div></article>
@@ -107,7 +116,7 @@
         </div>
       </section>
       <section class="view" id="view-risk"><div class="section-heading"><div><h2>Gestione del rischio</h2><p>Regole applicate prima di inoltrare ogni ordine.</p></div></div><div class="metric-grid"><article class="metric"><span>Modalità</span><strong class="small-value">PAPER</strong><small>LIVE disabilitato</small></article><article class="metric"><span>Asset consentiti</span><strong class="small-value">Crypto</strong><small>Azioni escluse</small></article><article class="metric"><span>Stop loss</span><strong class="small-value">Richiesto</strong><small>Per ogni posizione</small></article><article class="metric"><span>Autonomia AI</span><strong class="small-value">Analisi</strong><small>Nessun invio ordini</small></article></div></section>
-      <section class="view" id="view-settings"><div class="section-heading"><div><h2>Impostazioni</h2><p>Connessioni e parametri del sistema.</p></div></div><article class="panel settings-list"><div><span>Motore</span><strong>Hummingbot · da collegare</strong></div><div><span>Analisi</span><strong>TradingAgents · non attivo</strong></div><div><span>Ambito</span><strong>Solo criptovalute</strong></div><div><span>Runtime</span><strong>Browser PAPER · solo pagina aperta</strong></div></article></section>
+      <section class="view" id="view-settings"><div class="section-heading"><div><h2>Impostazioni</h2><p>Connessioni e parametri del sistema.</p></div></div><article class="panel settings-list"><div><span>Broker Paper</span><strong>Alpaca · adapter backend implementato, runtime da configurare</strong></div><div><span>Autenticazione ordini</span><strong>Token server-side · interfaccia da collegare</strong></div><div><span>Motore</span><strong>Hummingbot · da collegare</strong></div><div><span>Analisi</span><strong>TradingAgents · non attivo</strong></div><div><span>Ambito</span><strong>Solo criptovalute</strong></div><div><span>Runtime</span><strong>Browser PAPER · solo pagina aperta</strong></div></article></section>
       <footer>Miracolo Trading AI <span>·</span> Ambiente PAPER <span>·</span> Nessun ordine LIVE abilitato</footer>
     </main>
   </div>
