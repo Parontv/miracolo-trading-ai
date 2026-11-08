@@ -7,9 +7,17 @@ from miracolo_trading.condor_readonly import (
 )
 
 
+class Response:
+    def __init__(self, payload):
+        self.payload = payload
+    def __enter__(self): return self
+    def __exit__(self, *args): return False
+    def read(self): return self.payload
+
+
 class CondorReadOnlyTests(unittest.TestCase):
     def test_missing_token_fails_closed(self):
-        client = CondorReadOnlyClient(CondorReadOnlyConfig("http://localhost:8088", ""))
+        client = CondorReadOnlyClient(CondorReadOnlyConfig("http://localhost:8088"))
         self.assertEqual(client.servers(), {"connected": False, "reason": "missing_api_token"})
 
     def test_only_api_paths_are_allowed(self):
@@ -19,11 +27,7 @@ class CondorReadOnlyTests(unittest.TestCase):
 
     @patch("miracolo_trading.condor_readonly.urlopen")
     def test_servers_uses_get_and_bearer_auth(self, mocked):
-        class Response:
-            def __enter__(self): return self
-            def __exit__(self, *args): return False
-            def read(self): return b'[{"name":"paper","online":true}]'
-        mocked.return_value = Response()
+        mocked.return_value = Response(b'[{"name":"paper","online":true}]')
         client = CondorReadOnlyClient(CondorReadOnlyConfig("http://localhost:8088", "secret"))
         self.assertEqual(client.servers(), [{"name": "paper", "online": True}])
         request = mocked.call_args.args[0]
@@ -34,6 +38,36 @@ class CondorReadOnlyTests(unittest.TestCase):
     def test_timeout_reports_unreachable(self, _):
         client = CondorReadOnlyClient(CondorReadOnlyConfig("http://localhost:8088", "secret"))
         self.assertEqual(client.servers(), {"connected": False, "reason": "api_unreachable"})
+
+    @patch("miracolo_trading.condor_readonly.urlopen")
+    def test_local_mode_mints_session_jwt_and_reads_servers(self, mocked):
+        mocked.side_effect = [
+            Response(b'{"token":"local-session-jwt","user":{"id":1}}'),
+            Response(b'[{"name":"paper","online":true}]'),
+        ]
+        client = CondorReadOnlyClient(CondorReadOnlyConfig(
+            "http://127.0.0.1:8088", auth_mode="local"
+        ))
+        self.assertEqual(client.servers(), [{"name": "paper", "online": True}])
+        login, read = mocked.call_args_list[0].args[0], mocked.call_args_list[1].args[0]
+        self.assertEqual(login.full_url, "http://127.0.0.1:8088/api/v1/auth/local-login")
+        self.assertEqual(login.get_method(), "POST")
+        self.assertEqual(read.get_method(), "GET")
+        self.assertEqual(read.get_header("Authorization"), "Bearer local-session-jwt")
+
+    @patch("miracolo_trading.condor_readonly.urlopen")
+    def test_local_mode_refuses_non_loopback_host(self, mocked):
+        client = CondorReadOnlyClient(CondorReadOnlyConfig(
+            "https://condor.example.com", auth_mode="local"
+        ))
+        self.assertEqual(client.servers(), {"connected": False, "reason": "missing_api_token"})
+        mocked.assert_not_called()
+
+    def test_invalid_auth_mode_fails_closed(self):
+        client = CondorReadOnlyClient(CondorReadOnlyConfig(
+            "http://127.0.0.1:8088", auth_mode="none"
+        ))
+        self.assertEqual(client.servers(), {"connected": False, "reason": "invalid_auth_mode"})
 
 
 if __name__ == "__main__":
