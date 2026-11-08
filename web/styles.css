@@ -149,3 +149,9 @@ footer{color:#74869c}
   #navigation .nav-link.active{box-shadow:inset 0 -2px 0 #55d8b8}
   .view>.section-heading{margin-top:4px}
 }
+
+/* Alpaca-only interface: browser simulation is intentionally not rendered. */
+#view-dashboard > .metric-grid { display: none !important; }
+#view-dashboard .content-grid .panel:has(#engine-status) { display: none !important; }
+.browser-bot-panel, .browser-metrics, .browser-rules, #browser-market-list,
+#browser-event-list, #browser-position-list, #browser-trade-list { display: none !important; }
