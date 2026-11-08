@@ -42,7 +42,7 @@ Condor's local dashboard or API directly to the public Internet.
 ## Current boundary
 
 The WSGI adapter and same-origin dashboard client expose health, server list,
-server status, and cached portfolio reads. The only permitted POST is the
+server status, cached portfolio reads, market venues, and ticker snapshots. The only permitted POST is the
 loopback-only Condor local-login call when Local mode is explicitly selected;
 no trading or configuration mutation route is exposed. PAPER remains mandatory
 and LIVE is disabled.
