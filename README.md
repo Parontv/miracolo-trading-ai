@@ -1,6 +1,6 @@
 # Miracolo Trading AI
 
-Piattaforma indipendente **crypto-only**, progettata per operatività continua 24/7 e costruita integrando Condor, Hummingbot e TradingAgents.
+Piattaforma indipendente **crypto-only**. La modalità operativa attuale è un bot PAPER eseguito nel browser: lavora mentre la pagina è aperta e si mette in pausa quando la pagina non è visibile o viene chiusa.
 
 > Stato: fondazione e integrazione read-only in sviluppo. La dashboard può leggere server, portafoglio e ticker Condor quando il runtime e l'autenticazione sono configurati. Non è ancora un sistema di esecuzione PAPER completo e non invia ordini LIVE.
 
@@ -18,7 +18,10 @@ Piattaforma indipendente **crypto-only**, progettata per operatività continua 2
 
 | Funzione | Stato |
 |---|---|
-| Condor submodule fissato a commit | Integrato |
+| Bot PAPER browser con feed pubblico Binance | Implementato in sviluppo |
+| Arresto/pausa del loop quando la pagina è nascosta o chiusa | Implementato |
+| Persistenza locale di saldo simulato, posizioni e storico | Implementata |
+| Condor submodule fissato a commit | Integrato, non richiesto per il bot browser |
 | Adapter API Condor GET-only | Implementato |
 | Rinnovo JWT in Condor Local mode loopback | Implementato e testato |
 | Lista server e stato Hummingbot | Implementato |
@@ -30,7 +33,7 @@ Piattaforma indipendente **crypto-only**, progettata per operatività continua 2
 | Risk Gateway per ordini PAPER | Base iniziale, da collegare al motore |
 | Esecuzione PAPER Hummingbot | Non ancora abilitata |
 | TradingAgents | Non ancora integrato |
-| Runtime persistente 24/7 e deploy | Non ancora configurati |
+| Runtime persistente 24/7 | Non previsto nella modalità browser |
 
 La UI non inventa prezzi, P&L o ordini: mostra dati mancanti come non disponibili.
 
