@@ -1,0 +1,10 @@
+{
+  "trading_mode": "PAPER",
+  "live_trading_allowed": false,
+  "max_new_trades_per_day": 3,
+  "max_open_positions": 3,
+  "max_daily_loss_usd": 15,
+  "require_stop_loss": true,
+  "require_risk_approval": true,
+  "ai_agents_can_place_orders": false
+}
