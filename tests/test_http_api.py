@@ -21,6 +21,12 @@ class FakeCondor:
     def market_tickers(self, name, connector):
         return {"connector": connector, "tickers": []}
 
+    def bots(self, name):
+        return {"server_online": True, "bots": [{"name": "paper-bot", "status": "running"}]}
+
+    def positions(self, name):
+        return {"executor_positions": [], "bot_positions": []}
+
 
 class HttpApiTests(unittest.TestCase):
     def request(self, path, method="GET", query=""):
@@ -72,6 +78,12 @@ class HttpApiTests(unittest.TestCase):
         )
         self.assertTrue(venues["venues"][0]["hummingbot_market_data"])
         self.assertEqual(tickers["connector"], "binance")
+
+    def test_reads_bot_and_position_status(self):
+        _, bots = self.request("/api/condor/servers/paper/bots")
+        _, positions = self.request("/api/condor/servers/paper/positions")
+        self.assertEqual(bots["bots"][0]["status"], "running")
+        self.assertEqual(positions["executor_positions"], [])
 
     def test_tickers_require_connector(self):
         response, body = self.request("/api/condor/servers/paper/market/tickers")
