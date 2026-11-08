@@ -18,7 +18,7 @@
         <a class="nav-link" href="#risk" data-view="risk">Gestione rischio</a>
         <a class="nav-link" href="#settings" data-view="settings">Impostazioni</a>
       </nav>
-      <div class="sidebar-bottom"><span class="dot offline"></span><span>Hummingbot offline · browser PAPER separato</span></div>
+      <div class="sidebar-bottom"><span class="dot offline"></span><span>Alpaca PAPER · collegamento da completare</span></div>
     </aside>
 
     <main class="main">
@@ -28,8 +28,8 @@
       </header>
 
       <section class="notice" id="connection-notice" role="status">
-        <strong>Hummingbot non collegato · runtime opzionale</strong>
-        <span>Il bot browser PAPER è indipendente da Hummingbot: quando lo avvii in Strategie, riceve dati pubblici Binance e simula operazioni localmente. Questa modalità non invia ordini reali.</span>
+        <strong>Alpaca PAPER non collegato</strong>
+        <span>Il terminale utilizza esclusivamente Alpaca PAPER per l'esecuzione. Il broker non è ancora collegato: nessun ordine viene inviato.</span>
       </section>
 
       <section class="view active" id="view-dashboard">
@@ -41,26 +41,26 @@
           <article class="metric"><span>Bot browser</span><strong id="metric-bots">0</strong><small id="metric-bots-note">Si ferma con la pagina</small></article>
         </div>
         <article class="panel alpaca-panel">
-          <div class="panel-title"><div><h3>Alpaca Paper · esecuzione simulata</h3><p>Collegamento server protetto, separato dal simulatore browser</p></div><span class="pill muted" id="alpaca-status">Backend da configurare</span></div>
+          <div class="panel-title"><div><h3>Alpaca PAPER · broker</h3><p>Saldo, posizioni e ordini del conto Paper</p></div><span class="pill muted" id="alpaca-status">Backend da configurare</span></div>
           <div class="alpaca-summary">
-            <div><span class="alpaca-indicator"></span><strong>Modalità PAPER bloccata</strong><small>Nessun collegamento LIVE previsto</small></div>
+            <div><span class="alpaca-indicator"></span><strong>Broker non collegato</strong><small>Nessun collegamento LIVE previsto</small></div>
             <div><strong>BTC/USD · ETH/USD · QNT/USD</strong><small>Gli strumenti saranno abilitati solo dopo verifica disponibilità su Alpaca</small></div>
           </div>
-          <p class="browser-disclaimer" id="alpaca-detail">Il backend Alpaca è stato aggiunto al progetto. Per collegarlo servono un runtime server con i segreti configurati e l’autenticazione della sessione web. Questa anteprima non invia ordini ad Alpaca.</p>
+          <p class="browser-disclaimer" id="alpaca-detail">In attesa del runtime autenticato e delle credenziali Alpaca PAPER sul server. Nessun dato virtuale viene mostrato e nessun ordine è stato inviato.</p>
           <a class="text-link" href="https://github.com/Parontv/miracolo-trading-ai/blob/feature/readonly-dashboard-api/docs/alpaca-paper.md" target="_blank" rel="noopener">Configurazione e stato integrazione</a>
         </article>
         <div class="content-grid">
-          <article class="panel"><div class="panel-title"><div><h3>Motore browser PAPER</h3><p>Binance public market data</p></div><span class="pill muted" id="engine-status">Bot browser · avvio manuale</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Simulazione nella pagina web</strong><p>Avvia il bot dalla sezione Strategie. Quando chiudi la pagina, il monitoraggio si ferma.</p></div></article>
-          <article class="panel"><div class="panel-title"><div><h3>Strategia tecnica</h3><p>EMA 9/21 + RSI 14</p></div><span class="pill muted">Sperimentale</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Segnali consultivi e PAPER</strong><p>La strategia simula posizioni spot senza leva. Non invia ordini all’exchange.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Motore Alpaca PAPER</h3><p>Esecuzione tramite broker Alpaca</p></div><span class="pill muted" id="engine-status">Alpaca PAPER · non collegato</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime Alpaca non collegato</strong><p>Il bot sarà eseguito sul server, indipendentemente dalla pagina web. Fino al collegamento, l'invio ordini resta disabilitato.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Strategia tecnica</h3><p>EMA 9/21 + RSI 14</p></div><span class="pill muted">Sperimentale</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Segnali consultivi e PAPER</strong><p>Le strategie potranno inviare ordini esclusivamente al conto Alpaca PAPER dopo i controlli di rischio.</p></div></article>
         </div>
-        <article class="panel condor-optional"><div class="panel-title"><div><h3>Server Condor</h3><p>Integrazione server opzionale, non necessaria per il bot browser PAPER</p></div><button class="refresh-button" id="refresh-servers" type="button">Aggiorna</button></div><div id="condor-servers" class="server-list"><p class="muted">Lettura server in corso…</p></div></article>
+        <article class="panel condor-optional"><div class="panel-title"><div><h3>Server Condor</h3><p>Integrazione server opzionale, integrazione dati separata dal broker</p></div><button class="refresh-button" id="refresh-servers" type="button">Aggiorna</button></div><div id="condor-servers" class="server-list"><p class="muted">Lettura server in corso…</p></div></article>
         <article class="panel condor-optional"><div class="panel-title"><div><h3>Portafoglio server</h3><p id="portfolio-server-label">Seleziona un server per leggere i saldi</p></div><span class="pill muted" id="portfolio-state">Non selezionato</span></div><div id="portfolio-content" class="empty-row">I dati verranno caricati dall'API Condor, senza forzare aggiornamenti sull'exchange.</div></article>
         <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Il registro degli eventi del bot è disponibile nella sezione Strategie.</div></article>
       
       <div class="section-heading"><div><h2>Workspace operativo</h2><p>Apri soltanto i pannelli che ti servono. I dati Condor restano in sola lettura.</p></div><span class="tag">CRYPTO · PAPER</span></div>
         
         <details class="workspace-section"><summary><span>Mercati e watchlist</span><small>Binance Spot · universo dinamico</small></summary>
-      <article class="panel"><div class="panel-title"><div><h3>Watchlist browser</h3><p>Coppie USDT selezionate in base a disponibilità e liquidità</p></div><span class="pill muted">Fino a 15 coppie · volume ≥ 2M USDT/24h</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot dalla sezione Strategie per collegare i dati live.</p></div></article>
+      
         <article class="panel market-controls condor-optional">
           <label>Server Condor<select id="market-server"><option value="">Caricamento server…</option></select></label>
           <label>Exchange / venue<select id="market-connector" disabled><option value="">Seleziona un server</option></select></label>
@@ -70,41 +70,18 @@
           <div id="market-tickers" class="ticker-table"><p class="muted">Collega Condor per caricare prezzi e volumi.</p></div>
         </article>
       </details>
-      <details class="workspace-section" open><summary><span>Strategie e bot</span><small>Motore browser PAPER</small></summary>
+      <details class="workspace-section" open><summary><span>Strategie e bot</span><small>Alpaca PAPER</small></summary>
         
-        <article class="panel browser-bot-panel">
-          <div class="panel-title"><div><h3>Motore di simulazione</h3><p>Prezzi pubblici Binance · candele 1 minuto</p></div><span class="pill muted" id="browser-bot-status">Pronto · avvio manuale</span></div>
-          <div class="browser-actions"><button class="refresh-button" id="browser-start" type="button">Avvia bot PAPER</button><button class="refresh-button" id="browser-stop" type="button" disabled>Ferma bot</button></div>
-          <p class="browser-disclaimer">Simulazione locale, nessun ordine reale. Capitale virtuale iniziale: 1.000 USDT. Ogni operazione usa 100 USDT, commissione stimata 0,10% per lato e slippage simulato 0,05%.</p>
-          <div class="metric-grid browser-metrics">
-            <article class="metric"><span>Capitale disponibile</span><strong id="browser-cash">$1.000,00</strong><small>Saldo virtuale</small></article>
-            <article class="metric"><span>Equity PAPER</span><strong id="browser-equity">$1.000,00</strong><small>Saldo + posizioni valorizzate</small></article>
-            <article class="metric"><span>P&amp;L aperto</span><strong id="browser-pnl">$0,00</strong><small>Al netto della fee d'ingresso</small></article>
-            <article class="metric"><span>Posizioni aperte</span><strong id="browser-open-count">0</strong><small>Massimo 3</small></article>
-          </div>
+        <article class="panel alpaca-panel">
+          <div class="panel-title"><div><h3>Motore di esecuzione Alpaca</h3><p>Ordini, saldo e posizioni del conto Paper</p></div><span class="pill muted" id="browser-bot-status">Broker non collegato</span></div>
+          <div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime server non collegato</strong><p>Questa interfaccia mostrerà esclusivamente dati restituiti da Alpaca PAPER. Nessuna simulazione locale e nessun ordine finché il collegamento autenticato non è verificato.</p></div>
         </article>
-        <div class="content-grid">
-          
-          <article class="panel"><div class="panel-title"><div><h3>Regole strategia</h3><p>Long spot simulato, senza leva</p></div></div>
-            <div class="settings-list browser-rules">
-              <div><span>Ingresso</span><strong>Incrocio EMA 9 sopra EMA 21 + RSI 14 oltre 50</strong></div>
-              <div><span>Uscita</span><strong>Incrocio EMA ribassista</strong></div>
-              <div><span>Stop loss</span><strong>1,5%</strong></div>
-              <div><span>Take profit</span><strong>3%</strong></div>
-              <div><span>Rischio operativo</span><strong>Solo PAPER · massimo 3 posizioni</strong></div>
-            </div>
-            <p class="browser-disclaimer">Parametri iniziali sperimentali, non ottimizzati né validati su backtest. Non sono una raccomandazione finanziaria.</p>
-          </article>
-        </div>
-        
-        
-        <article class="panel"><div class="panel-title"><div><h3>Eventi del bot</h3><p>Connessione, segnali e decisioni</p></div></div><div id="browser-event-list" class="browser-list"><p class="muted">Nessun evento registrato.</p></div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Universo crypto</h3><p>Asset abilitati e negoziabili su Alpaca</p></div><span class="pill muted">Da verificare sul broker</span></div><div class="empty-row">La lista verrà caricata dinamicamente dall'API Alpaca. Non verranno mostrate coppie Binance come se fossero negoziabili su Alpaca.</div></article>
       </details>
       </section>
       <section class="view" id="view-activity">
-        <div class="section-heading"><div><h2>Operazioni PAPER</h2><p>Posizioni simulate e storico salvato nel browser.</p></div><span class="tag">NESSUN ORDINE REALE</span></div>
-        <article class="panel"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Valore e livelli di protezione</p></div></div><div id="browser-position-list" class="browser-list"><p class="muted">Nessuna posizione PAPER aperta.</p></div></article>
-        <article class="panel"><div class="panel-title"><div><h3>Storico operazioni</h3><p>Risultati simulati</p></div></div><div id="browser-trade-list" class="browser-list"><p class="muted">Nessuna operazione simulata.</p></div></article>
+        <div class="section-heading"><div><h2>Operazioni Alpaca PAPER</h2><p>Ordini e posizioni restituiti dal broker.</p></div><span class="tag">CONTO PAPER</span></div>
+        <article class="panel"><div class="panel-title"><div><h3>Ordini e posizioni</h3><p>In attesa del collegamento autenticato Alpaca</p></div></div><div class="empty-row">Nessun dato broker disponibile. Non vengono inventati saldo, posizioni o operazioni.</div></article>
         <article class="panel activity-controls condor-optional">
           <label>Server<select id="activity-server"><option value="">Caricamento server…</option></select></label>
           <button class="refresh-button" id="refresh-activity" type="button">Aggiorna stato</button>
@@ -115,11 +92,10 @@
         </div>
       </section>
       <section class="view" id="view-risk"><div class="section-heading"><div><h2>Gestione del rischio</h2><p>Regole applicate prima di inoltrare ogni ordine.</p></div></div><div class="metric-grid"><article class="metric"><span>Modalità</span><strong class="small-value">PAPER</strong><small>LIVE disabilitato</small></article><article class="metric"><span>Asset consentiti</span><strong class="small-value">Crypto</strong><small>Azioni escluse</small></article><article class="metric"><span>Stop loss</span><strong class="small-value">Richiesto</strong><small>Per ogni posizione</small></article><article class="metric"><span>Autonomia AI</span><strong class="small-value">Analisi</strong><small>Nessun invio ordini</small></article></div></section>
-      <section class="view" id="view-settings"><div class="section-heading"><div><h2>Impostazioni</h2><p>Connessioni e parametri del sistema.</p></div></div><article class="panel settings-list"><div><span>Broker Paper</span><strong>Alpaca · adapter backend implementato, runtime da configurare</strong></div><div><span>Autenticazione ordini</span><strong>Token server-side · interfaccia da collegare</strong></div><div><span>Motore</span><strong>Hummingbot · da collegare</strong></div><div><span>Analisi</span><strong>TradingAgents · non attivo</strong></div><div><span>Ambito</span><strong>Solo criptovalute</strong></div><div><span>Runtime</span><strong>Browser PAPER · solo pagina aperta</strong></div></article></section>
+      <section class="view" id="view-settings"><div class="section-heading"><div><h2>Impostazioni</h2><p>Connessioni e parametri del sistema.</p></div></div><article class="panel settings-list"><div><span>Broker Paper</span><strong>Alpaca · adapter backend implementato, runtime da configurare</strong></div><div><span>Autenticazione ordini</span><strong>Token server-side · interfaccia da collegare</strong></div><div><span>Motore</span><strong>Hummingbot · da collegare</strong></div><div><span>Analisi</span><strong>TradingAgents · non attivo</strong></div><div><span>Ambito</span><strong>Solo criptovalute</strong></div><div><span>Runtime</span><strong>Runtime server Alpaca PAPER · da configurare</strong></div></article></section>
       <footer>Miracolo Trading AI <span>·</span> Ambiente PAPER <span>·</span> Nessun ordine LIVE abilitato</footer>
     </main>
   </div>
   <script src="./app.js"></script>
-  <script src="./browser-bot.js"></script>
 </body>
 </html>
