@@ -30,3 +30,14 @@
   .browser-position-row{align-items:flex-start}
   .browser-rules strong{max-width:100%;text-align:left}
 }
+
+/* Alpaca Paper status panel */
+.alpaca-panel{border:1px solid #d9e6e3;background:linear-gradient(135deg,#fff 0%,#f6faf9 100%)}
+.alpaca-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.alpaca-summary>div{position:relative;display:grid;gap:6px;padding:15px;border:1px solid #e4ecea;border-radius:10px;background:#fff}
+.alpaca-summary strong{font-size:13px;color:#203348}
+.alpaca-summary small{font-size:11px;line-height:1.5;color:#8290a4}
+.alpaca-indicator{width:9px;height:9px;border-radius:50%;background:#d59a42;box-shadow:0 0 0 4px #fbf2e4}
+.text-link{display:inline-block;margin-top:4px;color:#176b61;font-size:12px;font-weight:700;text-decoration:none}
+.text-link:hover{text-decoration:underline}
+@media(max-width:640px){.alpaca-summary{grid-template-columns:1fr}}
