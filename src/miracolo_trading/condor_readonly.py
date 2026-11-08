@@ -6,7 +6,7 @@ import os
 import threading
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -114,3 +114,14 @@ class CondorReadOnlyClient:
     def portfolio(self, name: str):
         """Read cached balances; never forces an exchange refresh."""
         return self._get(f"/api/v1/servers/{quote(name, safe='')}/portfolio")
+
+    def market_venues(self, name: str):
+        """Read Condor's supported market venues and their read-only flags."""
+        return self._get(f"/api/v1/servers/{quote(name, safe='')}/market/venues")
+
+    def market_tickers(self, name: str, connector: str):
+        """Read cached market tickers for one validated connector."""
+        query = urlencode({"connector": connector})
+        return self._get(
+            f"/api/v1/servers/{quote(name, safe='')}/market/tickers?{query}"
+        )
