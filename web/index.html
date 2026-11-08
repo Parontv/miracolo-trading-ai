@@ -51,7 +51,17 @@
         <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Nessun evento registrato. Gli eventi appariranno dopo il collegamento del runtime.</div></article>
       </section>
 
-      <section class="view" id="view-markets"><div class="section-heading"><div><h2>Mercati crypto</h2><p>Prezzi, spread, volume e liquidità provenienti dall'exchange.</p></div></div><article class="panel"><div class="empty-state"><strong>Feed di mercato non collegato</strong><p>Non mostriamo quotazioni inventate. La connessione verrà fatta tramite il backend.</p></div></article></section>
+      <section class="view" id="view-markets">
+        <div class="section-heading"><div><h2>Mercati crypto</h2><p>Tickers letti direttamente dai venue disponibili in Condor.</p></div><span class="tag">SOLO LETTURA</span></div>
+        <article class="panel market-controls">
+          <label>Server Condor<select id="market-server"><option value="">Caricamento server…</option></select></label>
+          <label>Exchange / venue<select id="market-connector" disabled><option value="">Seleziona un server</option></select></label>
+          <button class="refresh-button" id="refresh-markets" type="button">Aggiorna mercati</button>
+        </article>
+        <article class="panel"><div class="panel-title"><div><h3>Panoramica ticker</h3><p id="market-updated">Dati non ancora caricati</p></div><span class="pill muted" id="market-state">In attesa</span></div>
+          <div id="market-tickers" class="ticker-table"><p class="muted">Collega Condor per caricare prezzi e volumi.</p></div>
+        </article>
+      </section>
       <section class="view" id="view-strategies"><div class="section-heading"><div><h2>Strategie</h2><p>Configurazione e stato delle strategie Hummingbot.</p></div></div><article class="panel"><div class="empty-state"><strong>Nessuna strategia installata</strong><p>Prima colleghiamo e testiamo il motore PAPER ufficiale.</p></div></article></section>
       <section class="view" id="view-activity"><div class="section-heading"><div><h2>Operazioni</h2><p>Ordini, esecuzioni, commissioni e storico.</p></div></div><article class="panel"><div class="empty-state"><strong>Nessuna operazione disponibile</strong><p>Lo storico sarà popolato dagli eventi reali del motore PAPER.</p></div></article></section>
       <section class="view" id="view-risk"><div class="section-heading"><div><h2>Gestione del rischio</h2><p>Regole applicate prima di inoltrare ogni ordine.</p></div></div><div class="metric-grid"><article class="metric"><span>Modalità</span><strong class="small-value">PAPER</strong><small>LIVE disabilitato</small></article><article class="metric"><span>Asset consentiti</span><strong class="small-value">Crypto</strong><small>Azioni escluse</small></article><article class="metric"><span>Stop loss</span><strong class="small-value">Richiesto</strong><small>Per ogni posizione</small></article><article class="metric"><span>Autonomia AI</span><strong class="small-value">Analisi</strong><small>Nessun invio ordini</small></article></div></section>
