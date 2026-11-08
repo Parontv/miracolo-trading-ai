@@ -22,7 +22,9 @@ Piattaforma indipendente **crypto-only**. La modalità operativa attuale è un b
 | Arresto/pausa del loop quando la pagina è nascosta o chiusa | Implementato |
 | Persistenza locale di saldo simulato, posizioni e storico | Implementata |
 | Condor submodule fissato a commit | Integrato, non richiesto per il bot browser |
-| Adapter API Condor GET-only | Implementato |\n| Adapter Alpaca crypto PAPER (backend, host fisso Paper) | Implementato, in collaudo |\n| API Alpaca protette con token server-side | Implementate, UI session handoff da completare |
+| Adapter API Condor GET-only | Implementato |
+| Adapter Alpaca crypto PAPER (backend, host fisso Paper) | Implementato, in collaudo |
+| API Alpaca protette con token server-side | Implementate, UI session handoff da completare |
 | Rinnovo JWT in Condor Local mode loopback | Implementato e testato |
 | Lista server e stato Hummingbot | Implementato |
 | Lettura portafoglio cached | Implementata |
