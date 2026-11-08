@@ -28,7 +28,7 @@ jobs:
             if (!html.includes('id="' + id + '"')) throw new Error('Missing UI element: ' + id);
           }
           if (!html.includes('browser-bot.js')) throw new Error('Browser bot script is not loaded');
-          if (!js.includes('new WebSocket(wsUrl)')) throw new Error('Market WebSocket loop missing');
+          if (!js.includes('new WebSocket(wsUrl())')) throw new Error('Market WebSocket loop missing');
           if (!js.includes('state.enabled = false')) throw new Error('Stop control missing');
           if (!js.includes('async function discoverMarkets()')) throw new Error('Dynamic market discovery missing');
           if (!js.includes('MIN_QUOTE_VOLUME = 2000000')) throw new Error('Liquidity threshold missing');
