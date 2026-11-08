@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote
 
 from .condor_readonly import CondorReadOnlyClient, CondorReadOnlyConfig
 
@@ -14,6 +14,7 @@ def create_app(client: CondorReadOnlyClient | None = None):
     def app(environ, start_response):
         method = environ.get("REQUEST_METHOD", "GET").upper()
         path = environ.get("PATH_INFO", "/")
+        query = parse_qs(environ.get("QUERY_STRING", ""), keep_blank_values=False)
         status = "200 OK"
         headers = [("Content-Type", "application/json; charset=utf-8"),
                    ("Cache-Control", "no-store"),
@@ -33,15 +34,27 @@ def create_app(client: CondorReadOnlyClient | None = None):
         elif path.startswith("/api/condor/servers/"):
             tail = path[len("/api/condor/servers/"):]
             parts = tail.split("/")
-            if len(parts) != 2 or parts[1] not in {"status", "portfolio"} or not parts[0]:
+            if not parts[0]:
                 status = "404 Not Found"
                 payload = {"ok": False, "error": "not_found"}
-            else:
+            elif len(parts) == 2 and parts[1] in {"status", "portfolio"}:
                 name = unquote(parts[0])
                 payload = (condor.server_status(name) if parts[1] == "status"
                            else condor.portfolio(name))
-                if isinstance(payload, dict) and payload.get("connected") is False:
-                    status = "503 Service Unavailable"
+            elif len(parts) == 3 and parts[1:] == ["market", "venues"]:
+                payload = condor.market_venues(unquote(parts[0]))
+            elif len(parts) == 3 and parts[1:] == ["market", "tickers"]:
+                connector = query.get("connector", [""])[0]
+                if not connector or len(connector) > 80:
+                    status = "400 Bad Request"
+                    payload = {"ok": False, "error": "connector_required"}
+                else:
+                    payload = condor.market_tickers(unquote(parts[0]), connector)
+            else:
+                status = "404 Not Found"
+                payload = {"ok": False, "error": "not_found"}
+            if isinstance(payload, dict) and payload.get("connected") is False:
+                status = "503 Service Unavailable"
         else:
             status = "404 Not Found"
             payload = {"ok": False, "error": "not_found"}
