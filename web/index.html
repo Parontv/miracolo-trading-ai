@@ -63,7 +63,17 @@
         </article>
       </section>
       <section class="view" id="view-strategies"><div class="section-heading"><div><h2>Strategie</h2><p>Configurazione e stato delle strategie Hummingbot.</p></div></div><article class="panel"><div class="empty-state"><strong>Nessuna strategia installata</strong><p>Prima colleghiamo e testiamo il motore PAPER ufficiale.</p></div></article></section>
-      <section class="view" id="view-activity"><div class="section-heading"><div><h2>Operazioni</h2><p>Ordini, esecuzioni, commissioni e storico.</p></div></div><article class="panel"><div class="empty-state"><strong>Nessuna operazione disponibile</strong><p>Lo storico sarà popolato dagli eventi reali del motore PAPER.</p></div></article></section>
+      <section class="view" id="view-activity">
+        <div class="section-heading"><div><h2>Bot e posizioni</h2><p>Monitoraggio in sola lettura dello stato operativo Condor/Hummingbot.</p></div><span class="tag">NESSUN COMANDO DI TRADING</span></div>
+        <article class="panel activity-controls">
+          <label>Server<select id="activity-server"><option value="">Caricamento server…</option></select></label>
+          <button class="refresh-button" id="refresh-activity" type="button">Aggiorna stato</button>
+        </article>
+        <div class="content-grid">
+          <article class="panel"><div class="panel-title"><div><h3>Bot</h3><p>Stato e strategia</p></div><span class="pill muted" id="bots-state">In attesa</span></div><div id="bot-list" class="activity-list"><p class="muted">Nessun dato caricato.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Executor e controller</p></div><span class="pill muted" id="positions-state">In attesa</span></div><div id="position-list" class="activity-list"><p class="muted">Nessun dato caricato.</p></div></article>
+        </div>
+      </section>
       <section class="view" id="view-risk"><div class="section-heading"><div><h2>Gestione del rischio</h2><p>Regole applicate prima di inoltrare ogni ordine.</p></div></div><div class="metric-grid"><article class="metric"><span>Modalità</span><strong class="small-value">PAPER</strong><small>LIVE disabilitato</small></article><article class="metric"><span>Asset consentiti</span><strong class="small-value">Crypto</strong><small>Azioni escluse</small></article><article class="metric"><span>Stop loss</span><strong class="small-value">Richiesto</strong><small>Per ogni posizione</small></article><article class="metric"><span>Autonomia AI</span><strong class="small-value">Analisi</strong><small>Nessun invio ordini</small></article></div></section>
       <section class="view" id="view-settings"><div class="section-heading"><div><h2>Impostazioni</h2><p>Connessioni e parametri del sistema.</p></div></div><article class="panel settings-list"><div><span>Motore</span><strong>Hummingbot · da collegare</strong></div><div><span>Analisi</span><strong>TradingAgents · non attivo</strong></div><div><span>Ambito</span><strong>Solo criptovalute</strong></div><div><span>Runtime</span><strong>Obiettivo 24/7 · non ancora operativo</strong></div></article></section>
       <footer>Miracolo Trading AI <span>·</span> Ambiente PAPER <span>·</span> Nessun ordine LIVE abilitato</footer>
