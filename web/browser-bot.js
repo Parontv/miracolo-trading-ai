@@ -241,21 +241,26 @@
   function renderAll() { renderMarkets(); renderMetrics(); renderPositions(); renderTrades(); renderEvents(); }
 
   async function discoverMarkets() {
-    const query = encodeURIComponent(JSON.stringify(CANDIDATES));
     const bases = ["https://data-api.binance.vision/api/v3/", "https://api.binance.com/api/v3/"];
     let lastError;
     for (const base of bases) {
       try {
-        const [infoResponse, tickerResponse] = await Promise.all([
-          fetch(base + "exchangeInfo?symbols=" + query, { cache: "no-store" }),
-          fetch(base + "ticker/24hr?symbols=" + query, { cache: "no-store" })
-        ]);
-        if (!infoResponse.ok || !tickerResponse.ok) throw new Error("HTTP " + infoResponse.status + "/" + tickerResponse.status);
-        const info = await infoResponse.json(), tickers = await tickerResponse.json();
-        if (!Array.isArray(info.symbols) || !Array.isArray(tickers)) throw new Error("Risposta exchange non valida");
+        const infoResponse = await fetch(base + "exchangeInfo", { cache: "no-store" });
+        if (!infoResponse.ok) throw new Error("exchangeInfo HTTP " + infoResponse.status);
+        const info = await infoResponse.json();
+        if (!Array.isArray(info.symbols)) throw new Error("Risposta exchangeInfo non valida");
+        const eligibleSymbols = info.symbols.filter(x =>
+          CANDIDATES.includes(x.symbol) && x.status === "TRADING" &&
+          x.quoteAsset === "USDT" && x.isSpotTradingAllowed !== false
+        );
+        if (!eligibleSymbols.length) throw new Error("Nessuna coppia candidata abilitata su Spot");
+        const query = encodeURIComponent(JSON.stringify(eligibleSymbols.map(x => x.symbol)));
+        const tickerResponse = await fetch(base + "ticker/24hr?symbols=" + query, { cache: "no-store" });
+        if (!tickerResponse.ok) throw new Error("ticker/24hr HTTP " + tickerResponse.status);
+        const tickers = await tickerResponse.json();
+        if (!Array.isArray(tickers)) throw new Error("Risposta ticker non valida");
         const volumes = new Map(tickers.map(t => [t.symbol, Number(t.quoteVolume)]));
-        const eligible = info.symbols
-          .filter(x => x.status === "TRADING" && x.quoteAsset === "USDT" && x.isSpotTradingAllowed !== false)
+        const eligible = eligibleSymbols
           .map(x => ({ s: x.symbol, label: x.baseAsset + "/USDT", volume: volumes.get(x.symbol) || 0 }))
           .filter(x => Number.isFinite(x.volume) && x.volume >= MIN_QUOTE_VOLUME)
           .sort((a, b) => b.volume - a.volume);
