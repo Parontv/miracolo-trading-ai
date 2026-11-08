@@ -32,7 +32,8 @@ jobs:
           if (!js.includes('state.enabled = false')) throw new Error('Stop control missing');
           if (!js.includes('async function discoverMarkets()')) throw new Error('Dynamic market discovery missing');
           if (!js.includes('MIN_QUOTE_VOLUME = 2000000')) throw new Error('Liquidity threshold missing');
-          if (!js.includes('exchangeInfo?symbols=')) throw new Error('Spot eligibility check missing');
+          if (!js.includes('exchangeInfo')) throw new Error('Spot eligibility check missing');
+          if (!js.includes('ticker/24hr?symbols=')) throw new Error('Liquidity ticker check missing');
           if (!js.includes('MAX_WATCH = 15')) throw new Error('Expanded watchlist limit missing');
           console.log('Browser PAPER UI wiring OK');
           NODE
