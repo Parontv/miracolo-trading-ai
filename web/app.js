@@ -129,6 +129,8 @@ async function loadServers() {
     const online = servers.filter((server) => server.online).length;
     document.querySelector("#engine-status").textContent = `${online}/${servers.length} server online`;
     document.querySelector("#engine-status").classList.toggle("muted", online === 0);
+    const preferred = servers.find((server) => server.is_default) || servers.find((server) => server.online) || servers[0];
+    if (preferred) await loadDashboardMetrics(preferred.name);
     const notice = document.querySelector("#connection-notice");
     notice.hidden = online > 0;
     if (online === 0) {
@@ -415,3 +417,52 @@ setInterval(() => {
     loadActivity();
   }
 }, 15000);
+
+
+async function loadDashboardMetrics(serverName) {
+  const portfolioEl = document.querySelector("#metric-portfolio");
+  const positionsEl = document.querySelector("#metric-positions");
+  const pnlEl = document.querySelector("#metric-pnl");
+  const botsEl = document.querySelector("#metric-bots");
+  const base = `/api/condor/servers/${encodeURIComponent(serverName)}`;
+  const results = await Promise.allSettled([
+    apiGet(`${base}/portfolio`),
+    apiGet(`${base}/positions`),
+    apiGet(`${base}/bots`)
+  ]);
+  if (results[0].status === "fulfilled") {
+    portfolioEl.textContent = `$${formatMoney(results[0].value.total_usd)}`;
+    document.querySelector("#metric-portfolio-note").textContent = `Server: ${serverName}`;
+  } else {
+    portfolioEl.textContent = "--";
+    document.querySelector("#metric-portfolio-note").textContent = "Portafoglio non disponibile";
+  }
+  if (results[1].status === "fulfilled") {
+    const data = results[1].value;
+    const positions = [
+      ...(Array.isArray(data.executor_positions) ? data.executor_positions : []),
+      ...(Array.isArray(data.bot_positions) ? data.bot_positions : [])
+    ];
+    const pnl = positions.reduce((sum, position) => sum + Number(position.unrealized_pnl || 0), 0);
+    positionsEl.textContent = String(positions.length);
+    document.querySelector("#metric-positions-note").textContent = `Server: ${serverName}`;
+    pnlEl.textContent = `${pnl >= 0 ? "+" : ""}$${formatMoney(pnl)}`;
+    pnlEl.classList.toggle("positive", pnl >= 0);
+    pnlEl.classList.toggle("negative", pnl < 0);
+    document.querySelector("#metric-pnl-note").textContent = "Somma PnL non realizzato";
+  } else {
+    positionsEl.textContent = "--";
+    pnlEl.textContent = "--";
+    document.querySelector("#metric-positions-note").textContent = "Dato non disponibile";
+    document.querySelector("#metric-pnl-note").textContent = "Dato non disponibile";
+  }
+  if (results[2].status === "fulfilled") {
+    const bots = Array.isArray(results[2].value.bots) ? results[2].value.bots : [];
+    const running = bots.filter((bot) => String(bot.status).toLowerCase() === "running").length;
+    botsEl.textContent = String(running);
+    document.querySelector("#metric-bots-note").textContent = `${bots.length} bot configurati · ${serverName}`;
+  } else {
+    botsEl.textContent = "--";
+    document.querySelector("#metric-bots-note").textContent = "Dato non disponibile";
+  }
+}
