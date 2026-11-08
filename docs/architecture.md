@@ -1,36 +1,38 @@
 # Architettura e confini di integrazione
 
 ## Decisione
-Usare i progetti upstream per le funzioni che già implementano bene. Miracolo mantiene la propria interfaccia, policy di rischio e integrazione, senza riscrivere il motore di trading.
+Condor diventa la base applicativa da integrare, non un semplice riferimento grafico. Miracolo aggiunge il livello di prodotto crypto-only e le protezioni deterministiche. Evitare una seconda dashboard e un secondo orchestratore quando Condor offre già queste funzioni.
 
-## Componenti
-- Hummingbot: connettori exchange, strategie, ordini e paper trading.
-- Hummingbot API: controllo autenticato e osservabilità del runtime.
-- Condor: riferimento upstream per la web UI React e per i flussi di gestione. La sua dashboard esiste già; valutare l'integrazione del progetto completo prima di duplicarne le funzioni.
-- Web UI Miracolo: pannello mobile-first in italiano, separato dal runtime e senza credenziali exchange nel browser.
-- TradingAgents: ricerca e analisi. Il suo output è una proposta non attendibile fino alla validazione.
-- Risk Gateway: controlli deterministici, idempotenza e journal.
+## Componenti e responsabilità
+- **Condor**: dashboard web, interazione Telegram opzionale, agenti, routine, gestione dei server e flussi operativi. È l'applicazione di controllo.
+- **Hummingbot API**: backend autenticato per stato, portfolio, bot, executor e operazioni.
+- **Hummingbot**: connettori exchange, strategie, ordini e posizioni.
+- **Miracolo Risk Gateway**: policy crypto-only, approvazione deterministica, limiti, idempotenza, kill switch e journal.
+- **TradingAgents**: analisi e proposte. Non deve avere credenziali exchange né accesso diretto agli endpoint di invio ordini.
 
-## Regole di sicurezza
-1. La modalità predefinita è PAPER.
-2. Il trading LIVE resta disabilitato.
-3. Gli agenti AI non possono chiamare API exchange né endpoint di invio ordini.
-4. I limiti di esposizione, frequenza e perdita sono applicati lato server.
-5. Usare chiavi di idempotenza per evitare ordini duplicati.
-6. Bloccare l'esecuzione se rischio, dati o stato Hummingbot non sono disponibili.
-7. Non esporre API Hummingbot o database direttamente su Internet.
-8. La UI non deve mostrare dati fittizi: stati non disponibili sono visualizzati come tali.
+## Confine di sicurezza obbligatorio
+Condor documenta flussi di trading e agenti autonomi che possono operare tramite Hummingbot API. Non si deve quindi collegare Condor direttamente a un account LIVE prima di aver verificato ogni percorso di invio ordini e averlo instradato attraverso il Risk Gateway.
 
-## Interfaccia web
-La prima shell statica è in `web/`:
-- Panoramica
-- Mercati
-- Strategie
-- Operazioni
-- Gestione rischio
-- Impostazioni
+1. Modalità iniziale PAPER; LIVE disabilitato.
+2. Gli agenti AI non inviano ordini direttamente.
+3. Ogni ordine passa dal Risk Gateway, che controlla policy, rischio, limiti e idempotenza.
+4. Bloccare l'esecuzione se dati, rischio, autenticazione o stato runtime non sono disponibili.
+5. Nessuna chiave exchange nel browser, nel repository o nei log.
+6. Non esporre Hummingbot API (porta 8000) o database su Internet pubblico.
+7. Usare rete privata autenticata, ad esempio Tailscale, e credenziali robuste.
+8. Disabilitare le funzioni DEX/Gateway nella prima fase: il perimetro è solo crypto CEX spot/perpetual, con modalità PAPER.
 
-È un prototipo navigabile, non ancora collegato al backend. La prossima integrazione dovrà usare un backend autenticato come ponte verso Hummingbot API.
+## Interfaccia
+La dashboard web di Condor è la base da valutare e integrare. La shell statica Miracolo in `web/` resta solo un prototipo e non deve diventare una seconda interfaccia concorrente. L'interfaccia finale sarà in italiano e ottimizzata per Android.
 
-## Vincolo runtime
-Hummingbot e TradingAgents richiedono un runtime Python/container persistente. Cloudflare Workers/Pages possono ospitare la UI e un piano di controllo leggero, ma non l'intero runtime upstream. Il funzionamento 24/7 richiederà una macchina sempre accesa.
+## Runtime 24/7
+Condor e Hummingbot API richiedono un host persistente e, per l'API, Docker. Cloudflare Workers/Pages non possono ospitare il runtime Python/container. La dashboard può essere pubblicata separatamente, ma il motore deve restare su una macchina sempre attiva. La modalità locale di Condor non ha login e si lega a 127.0.0.1 per impostazione predefinita: non esporla in rete senza un livello di autenticazione e rete privata.
+
+## Criteri per dichiarare l'integrazione completata
+- Condor avviato con configurazione locale verificata.
+- Hummingbot API raggiungibile solo attraverso rete privata e autenticazione.
+- Connettore PAPER collegato e dati di mercato reali ricevuti.
+- Ogni percorso di invio ordini verificato e protetto dal Risk Gateway.
+- Ordine simulato end-to-end, stop, cancellazione e recovery testati.
+- Journal e audit log verificabili.
+- Nessun percorso LIVE abilitato.
