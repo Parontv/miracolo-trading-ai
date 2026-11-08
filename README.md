@@ -72,6 +72,10 @@ In modalità Telegram usare \`CONDOR_AUTH_MODE=bearer\` e un JWT web-session val
 - Hummingbot API e Condor non devono essere esposti su Internet pubblico.
 - Per un runtime 24/7 serve un host persistente, rete privata, health checks e restart policy.
 
+## Runtime deployment
+
+Per avviare API e interfaccia su un host Linux persistente con Condor locale, seguire [docs/runtime-deployment.md](docs/runtime-deployment.md). Il pacchetto Docker usa rete host e mantiene API e proxy vincolati a loopback; l'accesso remoto va protetto con Cloudflare Tunnel + Cloudflare Access.
+
 ## Test
 \`\`\`bash
 python -m unittest discover -s tests -v
