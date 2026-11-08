@@ -46,6 +46,19 @@ class HttpApiTests(unittest.TestCase):
         self.assertTrue(status["connected"])
         self.assertEqual(portfolio["balances"], [])
 
+    def test_condor_connection_failure_is_service_unavailable(self):
+        class OfflineCondor(FakeCondor):
+            def servers(self):
+                return {"connected": False, "reason": "missing_api_token"}
+        captured = {}
+        def start_response(status, headers):
+            captured["status"] = status
+        app = create_app(OfflineCondor())
+        body = b"".join(app({"REQUEST_METHOD": "GET", "PATH_INFO": "/api/condor/servers",
+                             "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0"}, start_response))
+        self.assertEqual(captured["status"], "503 Service Unavailable")
+        self.assertEqual(json.loads(body)["reason"], "missing_api_token")
+
     def test_unknown_route_is_not_found(self):
         response, _ = self.request("/api/orders")
         self.assertEqual(response["status"], "404 Not Found")
