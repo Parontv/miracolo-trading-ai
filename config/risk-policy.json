@@ -1,8 +1,11 @@
 {
+  "market_scope": "CRYPTO_ONLY",
+  "runtime_target": "24x7",
   "trading_mode": "PAPER",
   "live_trading_allowed": false,
-  "max_new_trades_per_day": 3,
-  "max_open_positions": 3,
+  "max_new_trades_per_day": null,
+  "max_open_positions": 5,
+  "max_orders_per_minute": 5,
   "max_daily_loss_usd": 15,
   "require_stop_loss": true,
   "require_risk_approval": true,
