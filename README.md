@@ -22,7 +22,7 @@ Piattaforma indipendente **crypto-only**. La modalità operativa attuale è un b
 | Arresto/pausa del loop quando la pagina è nascosta o chiusa | Implementato |
 | Persistenza locale di saldo simulato, posizioni e storico | Implementata |
 | Condor submodule fissato a commit | Integrato, non richiesto per il bot browser |
-| Adapter API Condor GET-only | Implementato |
+| Adapter API Condor GET-only | Implementato |\n| Adapter Alpaca crypto PAPER (backend, host fisso Paper) | Implementato, in collaudo |\n| API Alpaca protette con token server-side | Implementate, UI session handoff da completare |
 | Rinnovo JWT in Condor Local mode loopback | Implementato e testato |
 | Lista server e stato Hummingbot | Implementato |
 | Lettura portafoglio cached | Implementata |
@@ -30,7 +30,7 @@ Piattaforma indipendente **crypto-only**. La modalità operativa attuale è un b
 | Aggiornamento ticker dashboard | Ogni 15 secondi mentre la pagina Mercati è visibile |
 | Monitoraggio bot e controller | Implementato in sola lettura |
 | Monitoraggio posizioni aperte | Implementato in sola lettura, refresh 15 secondi nella pagina Operazioni |
-| Risk Gateway per ordini PAPER | Base iniziale, da collegare al motore |
+| Risk Gateway per ordini PAPER | Adapter Alpaca con allowlist, limiti e controlli; collegamento UI da completare |
 | Esecuzione PAPER Hummingbot | Non ancora abilitata |
 | TradingAgents | Non ancora integrato |
 | Runtime persistente 24/7 | Non previsto nella modalità browser |
@@ -77,7 +77,7 @@ In modalità Telegram usare \`CONDOR_AUTH_MODE=bearer\` e un JWT web-session val
 
 ## Runtime deployment
 
-Per avviare API e interfaccia su un host Linux persistente con Condor locale, seguire [docs/runtime-deployment.md](docs/runtime-deployment.md). Il pacchetto Docker usa rete host e mantiene API e proxy vincolati a loopback; l'accesso remoto va protetto con Cloudflare Tunnel + Cloudflare Access.
+Per avviare API e interfaccia su un host Linux persistente con Condor locale, seguire [docs/runtime-deployment.md](docs/runtime-deployment.md) e configurare Alpaca secondo [docs/alpaca-paper.md](docs/alpaca-paper.md). Il pacchetto Docker usa rete host e mantiene API e proxy vincolati a loopback; l'accesso remoto va protetto con Cloudflare Tunnel + Cloudflare Access.
 
 ## Test
 \`\`\`bash
