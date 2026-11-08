@@ -36,7 +36,7 @@ class HttpApiTests(unittest.TestCase):
             captured["headers"] = dict(headers)
         app = create_app(FakeCondor())
         environ = {"REQUEST_METHOD": method, "PATH_INFO": path, "QUERY_STRING": query,
-                   "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0"}
+                   "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0", "REMOTE_ADDR": "127.0.0.1"}
         body = b"".join(app(environ, start_response))
         return captured, json.loads(body)
 
@@ -67,7 +67,7 @@ class HttpApiTests(unittest.TestCase):
             captured["status"] = status
         app = create_app(OfflineCondor())
         body = b"".join(app({"REQUEST_METHOD": "GET", "PATH_INFO": "/api/condor/servers",
-                             "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0"}, start_response))
+                             "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0", "REMOTE_ADDR": "127.0.0.1"}, start_response))
         self.assertEqual(captured["status"], "503 Service Unavailable")
         self.assertEqual(json.loads(body)["reason"], "missing_api_token")
 
@@ -89,6 +89,19 @@ class HttpApiTests(unittest.TestCase):
         response, body = self.request("/api/condor/servers/paper/market/tickers")
         self.assertEqual(response["status"], "400 Bad Request")
         self.assertEqual(body["error"], "connector_required")
+
+    def test_non_loopback_clients_are_blocked(self):
+        captured = {}
+        def start_response(status, headers):
+            captured["status"] = status
+        app = create_app(FakeCondor())
+        body = b"".join(app({
+            "REQUEST_METHOD": "GET", "PATH_INFO": "/api/health",
+            "wsgi.input": BytesIO(), "CONTENT_LENGTH": "0",
+            "REMOTE_ADDR": "203.0.113.10"
+        }, start_response))
+        self.assertEqual(captured["status"], "403 Forbidden")
+        self.assertEqual(json.loads(body)["error"], "loopback_access_only")
 
     def test_unknown_route_is_not_found(self):
         response, _ = self.request("/api/orders")
