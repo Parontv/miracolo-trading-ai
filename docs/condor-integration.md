@@ -1,7 +1,7 @@
 # Piano di integrazione Condor
 
 ## Stato
-Decisione architetturale: Condor è la base applicativa da integrare. Questa fase documenta l'integrazione e i suoi vincoli; non dichiara ancora Condor installato o collegato a un exchange.
+Condor è collegato alla repository come **Git submodule**, fissato al commit upstream `a817f6633a90afe41523377bfd360c0b9316d423`. Il codice upstream non è stato copiato o modificato: gli aggiornamenti saranno revisionati e fissati esplicitamente.
 
 ## Cosa riutilizziamo
 - Dashboard web React/TypeScript di Condor.
@@ -11,7 +11,42 @@ Decisione architetturale: Condor è la base applicativa da integrare. Questa fas
 - Modalità locale o Telegram, scegliendo quella più adatta al controllo Android.
 
 Repository upstream: https://github.com/hummingbot/condor
-Commit upstream esaminato: `a817f6633a90afe41523377bfd360c0b9316d423`
+Submodule locale: `upstream/condor/`
+Licenza upstream dichiarata: MIT. Mantenere la licenza e le attribuzioni originali.
+
+## Requisiti tecnici rilevati
+- Python **3.12** (Condor richiede >=3.12 e <3.14).
+- Node.js **22** per il frontend.
+- `uv` per dipendenze Python.
+- Docker per installare e gestire Hummingbot API.
+- Host persistente per il funzionamento 24/7.
+
+## Setup locale isolato
+Clonare includendo il submodule:
+
+```bash
+git clone --recurse-submodules https://github.com/Parontv/miracolo-trading-ai.git
+cd miracolo-trading-ai
+git submodule status
+cd upstream/condor
+```
+
+La riga di `git submodule status` deve riportare il commit fissato sopra. Se il codice manca dopo un clone normale:
+
+```bash
+git submodule update --init --recursive
+```
+
+Per avviare Condor in locale, usare il wizard ufficiale e scegliere **Local mode**, senza Telegram. In questa prima fase non installare né configurare credenziali exchange LIVE:
+
+```bash
+make setup
+make install
+make doctor
+make run
+```
+
+La modalità locale non ha login e si lega a `127.0.0.1`: usarla solo sulla macchina locale. Non impostare `WEB_HOST=0.0.0.0` e non esporre la porta 8088 su LAN o Internet. Per accesso Android remoto servirà un livello privato autenticato, ad esempio Tailscale, dopo aver verificato il setup.
 
 ## Cosa aggiunge Miracolo
 - Perimetro esclusivo crypto.
@@ -30,9 +65,6 @@ Commit upstream esaminato: `a817f6633a90afe41523377bfd360c0b9316d423`
 5. **PAPER execution**: abilitare solo dopo test su ordini, stop, cancel, idempotenza, limiti e recovery.
 6. **TradingAgents**: aggiungere analisi periodiche con output strutturato e non eseguibile.
 7. **Hardening 24/7**: health checks, restart policy, log, alert, backup e rete privata.
-
-## Requisiti di deploy
-Condor e Hummingbot API necessitano di un host persistente; Hummingbot API richiede Docker. Cloudflare Pages/Workers possono ospitare solo una UI o un piano di controllo leggero, non i processi Python sempre attivi. La modalità locale di Condor non ha login e deve rimanere su localhost o dietro accesso privato autenticato.
 
 ## Gate di sicurezza
 - Nessun secret in Git o nel frontend.
