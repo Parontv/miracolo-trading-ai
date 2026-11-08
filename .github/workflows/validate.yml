@@ -58,3 +58,13 @@ jobs:
       - name: Verify backend imports
         run: |
           uv run python -c "import config_manager; import handlers; import utils; print('Condor backend imports OK')"
+
+  miracolo-web-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Miracolo dashboard JavaScript
+        run: node --check web/app.js
