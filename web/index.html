@@ -62,7 +62,36 @@
           <div id="market-tickers" class="ticker-table"><p class="muted">Collega Condor per caricare prezzi e volumi.</p></div>
         </article>
       </section>
-      <section class="view" id="view-strategies"><div class="section-heading"><div><h2>Strategie</h2><p>Configurazione e stato delle strategie Hummingbot.</p></div></div><article class="panel"><div class="empty-state"><strong>Nessuna strategia installata</strong><p>Prima colleghiamo e testiamo il motore PAPER ufficiale.</p></div></article></section>
+      <section class="view" id="view-strategies">
+        <div class="section-heading"><div><h2>Bot crypto browser</h2><p>Il motore gira nel browser e si ferma quando la pagina viene chiusa o messa in background.</p></div><span class="tag">PAPER · SESSIONE WEB</span></div>
+        <article class="panel browser-bot-panel">
+          <div class="panel-title"><div><h3>Motore di simulazione</h3><p>Prezzi pubblici Binance · candele 1 minuto</p></div><span class="pill muted" id="browser-bot-status">Pronto · avvio manuale</span></div>
+          <div class="browser-actions"><button class="refresh-button" id="browser-start" type="button">Avvia bot PAPER</button><button class="refresh-button" id="browser-stop" type="button" disabled>Ferma bot</button></div>
+          <p class="browser-disclaimer">Simulazione locale, nessun ordine reale. Capitale virtuale iniziale: 1.000 USDT. Ogni operazione usa 100 USDT, commissione stimata 0,10% per lato e slippage simulato 0,05%.</p>
+          <div class="metric-grid browser-metrics">
+            <article class="metric"><span>Capitale disponibile</span><strong id="browser-cash">$1.000,00</strong><small>Saldo virtuale</small></article>
+            <article class="metric"><span>Equity PAPER</span><strong id="browser-equity">$1.000,00</strong><small>Saldo + posizioni valorizzate</small></article>
+            <article class="metric"><span>P&amp;L aperto</span><strong id="browser-pnl">$0,00</strong><small>Al netto della fee d'ingresso</small></article>
+            <article class="metric"><span>Posizioni aperte</span><strong id="browser-open-count">0</strong><small>Massimo 3</small></article>
+          </div>
+        </article>
+        <div class="content-grid">
+          <article class="panel"><div class="panel-title"><div><h3>Mercati monitorati</h3><p>Prezzo live · variazione 24 ore</p></div><span class="pill muted">Binance public feed</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot per collegare i dati.</p></div></article>
+          <article class="panel"><div class="panel-title"><div><h3>Regole strategia</h3><p>Long spot simulato, senza leva</p></div></div>
+            <div class="settings-list browser-rules">
+              <div><span>Ingresso</span><strong>Incrocio EMA 9 sopra EMA 21 + RSI 14 oltre 50</strong></div>
+              <div><span>Uscita</span><strong>Incrocio EMA ribassista</strong></div>
+              <div><span>Stop loss</span><strong>1,5%</strong></div>
+              <div><span>Take profit</span><strong>3%</strong></div>
+              <div><span>Rischio operativo</span><strong>Solo PAPER · massimo 3 posizioni</strong></div>
+            </div>
+            <p class="browser-disclaimer">Parametri iniziali sperimentali, non ottimizzati né validati su backtest. Non sono una raccomandazione finanziaria.</p>
+          </article>
+        </div>
+        <article class="panel"><div class="panel-title"><div><h3>Posizioni PAPER</h3><p>Valore e livelli di protezione</p></div></div><div id="browser-position-list" class="browser-list"><p class="muted">Nessuna posizione PAPER aperta.</p></div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Registro operazioni</h3><p>Risultati simulati, commissioni e motivi di uscita</p></div></div><div id="browser-trade-list" class="browser-list"><p class="muted">Nessuna operazione simulata.</p></div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Eventi del bot</h3><p>Connessione, segnali e decisioni</p></div></div><div id="browser-event-list" class="browser-list"><p class="muted">Nessun evento registrato.</p></div></article>
+      </section>
       <section class="view" id="view-activity">
         <div class="section-heading"><div><h2>Bot e posizioni</h2><p>Monitoraggio in sola lettura dello stato operativo Condor/Hummingbot.</p></div><span class="tag">NESSUN COMANDO DI TRADING</span></div>
         <article class="panel activity-controls">
@@ -80,5 +109,6 @@
     </main>
   </div>
   <script src="./app.js"></script>
+  <script src="./browser-bot.js"></script>
 </body>
 </html>
