@@ -466,3 +466,10 @@ async function loadDashboardMetrics(serverName) {
     document.querySelector("#metric-bots-note").textContent = "Dato non disponibile";
   }
 }
+
+setInterval(() => {
+  const dashboardView = document.querySelector("#view-dashboard");
+  if (!document.hidden && dashboardView?.classList.contains("active")) {
+    loadServers();
+  }
+}, 30000);
