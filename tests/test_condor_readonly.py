@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from miracolo_trading.condor_readonly import (
     CondorReadOnlyClient,
@@ -54,6 +55,24 @@ class CondorReadOnlyTests(unittest.TestCase):
         self.assertEqual(login.get_method(), "POST")
         self.assertEqual(read.get_method(), "GET")
         self.assertEqual(read.get_header("Authorization"), "Bearer local-session-jwt")
+
+    @patch("miracolo_trading.condor_readonly.urlopen")
+    def test_local_mode_renews_expired_jwt_after_401(self, mocked):
+        unauthorized = HTTPError("http://127.0.0.1:8088/api/v1/servers", 401, "expired", {}, None)
+        mocked.side_effect = [
+            unauthorized,
+            Response(b'{"token":"renewed-jwt"}'),
+            Response(b'[{"name":"paper","online":true}]'),
+        ]
+        client = CondorReadOnlyClient(CondorReadOnlyConfig(
+            "http://127.0.0.1:8088", auth_mode="local"
+        ))
+        self.assertEqual(client.servers(), [{"name": "paper", "online": True}])
+        self.assertEqual(mocked.call_count, 3)
+        self.assertEqual(mocked.call_args_list[1].args[0].full_url,
+                         "http://127.0.0.1:8088/api/v1/auth/local-login")
+        self.assertEqual(mocked.call_args_list[2].args[0].get_header("Authorization"),
+                         "Bearer renewed-jwt")
 
     @patch("miracolo_trading.condor_readonly.urlopen")
     def test_local_mode_refuses_non_loopback_host(self, mocked):
