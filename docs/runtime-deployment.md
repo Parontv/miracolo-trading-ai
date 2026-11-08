@@ -41,7 +41,7 @@ curl --fail http://127.0.0.1:8080/api/health
 curl --fail http://127.0.0.1:8080/api/condor/servers
 ```
 
-The health route proves only that Miracolo responds. The Condor servers route
+The health route proves only that Miracolo responds. Alpaca endpoints additionally require `MIRACOLO_API_TOKEN` and are not yet wired to the static Githack UI. The Condor servers route
 must also return the authorized server list to prove the Condor connection.
 If it returns 503, inspect Condor Local mode, its administrator configuration,
 and the API logs. Do not paste tokens into GitHub issues or chat.
