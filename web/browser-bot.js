@@ -21,7 +21,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "null");
       if (!saved) return initial();
-      return { ...initial(), ...saved,
+      return { ...initial(), ...saved, enabled: false,
         positions: saved.positions || {},
         trades: Array.isArray(saved.trades) ? saved.trades.slice(0, 100) : [],
         events: Array.isArray(saved.events) ? saved.events.slice(0, 50) : [] };
@@ -48,7 +48,10 @@
     return new Date(n).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
   }
   function addEvent(message) {
-    state.events.unshift({ at: Date.now(), message });
+    const now = Date.now();
+    const previous = state.events[0];
+    if (previous && previous.message === message && now - previous.at < 60000) return;
+    state.events.unshift({ at: now, message });
     state.events = state.events.slice(0, 30);
     persist();
     renderEvents();
@@ -342,15 +345,19 @@
     if (document.hidden) { disconnect(false); if (state.enabled) status("In pausa · pagina non visibile"); }
     else if (state.enabled) connect();
   });
-  window.addEventListener("pagehide", () => { leaving = true; disconnect(false); });
-  window.addEventListener("pageshow", () => { leaving = false; if (state.enabled && !document.hidden) connect(); });
+  window.addEventListener("pagehide", () => {
+    leaving = true;
+    state.enabled = false;
+    persist();
+    disconnect(false);
+  });
+  window.addEventListener("pageshow", () => { leaving = false; });
   renderAll();
-  if (state.enabled) {
-    $("browser-start")?.setAttribute("disabled", "disabled");
-    $("browser-stop")?.removeAttribute("disabled");
-    connect();
-  } else {
-    $("browser-stop")?.setAttribute("disabled", "disabled");
-    status("Pronto · avvio manuale");
-  }
+  // Preserve simulated positions, but never restart market monitoring after reload.
+  state.enabled = false;
+  persist();
+  $("browser-start")?.removeAttribute("disabled");
+  $("browser-stop")?.setAttribute("disabled", "disabled");
+  status("Pronto · avvio manuale");
+  if (state.events[0]?.message?.startsWith("Bot browser avviato")) addEvent("Sessione browser precedente terminata.");
 })();
