@@ -1,0 +1,10 @@
+:8080 {
+    bind 127.0.0.1
+    root * /srv/web
+    encode zstd gzip
+
+    @api path /api/*
+    reverse_proxy @api 127.0.0.1:8090
+
+    file_server
+}
