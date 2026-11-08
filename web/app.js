@@ -30,6 +30,18 @@ async function apiGet(path) {
 }
 
 async function refreshConnection() {
+  if (staticPreview) {
+    const status = document.querySelector("#connection-status");
+    const notice = document.querySelector("#connection-notice");
+    const engine = document.querySelector("#engine-status");
+    status.textContent = "Modalità browser PAPER disponibile";
+    status.classList.add("online");
+    document.querySelector("#connection-dot")?.classList.remove("offline");
+    notice.hidden = true;
+    engine.textContent = "Bot browser · avvio manuale";
+    engine.classList.remove("muted");
+    return;
+  }
   const status = document.querySelector("#connection-status");
   const notice = document.querySelector("#connection-notice");
   const engine = document.querySelector("#engine-status");
@@ -108,6 +120,10 @@ async function loadPortfolio(serverName) {
 
 async function loadServers() {
   const container = document.querySelector("#condor-servers");
+  if (staticPreview) {
+    showMessage(container, "Condor non serve per il bot PAPER eseguito direttamente nel browser.");
+    return;
+  }
   showMessage(container, "Lettura server Condor…");
   try {
     const servers = await apiGet("/api/condor/servers");
@@ -253,6 +269,7 @@ async function loadMarketVenues() {
 }
 
 async function loadMarketServers() {
+  if (staticPreview) return;
   const select = document.querySelector("#market-server");
   try {
     const servers = await apiGet("/api/condor/servers");
@@ -389,6 +406,7 @@ async function loadActivity() {
 }
 
 async function loadActivityServers() {
+  if (staticPreview) return;
   const select = document.querySelector("#activity-server");
   try {
     const servers = await apiGet("/api/condor/servers");
