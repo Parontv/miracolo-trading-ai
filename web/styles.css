@@ -137,3 +137,15 @@ p,.muted{color:#91a1b6}
 input,select,textarea{background:#0b1420!important;color:#e3edf7!important;border-color:#304258!important}
 footer{color:#74869c}
 @media(max-width:640px){.workspace-section>summary{padding:15px}.workspace-section>summary small{font-size:10px}.main{background:#090e16}}
+
+/* Dedicated operational workspaces */
+.view>.section-heading{margin:8px 0 18px;padding:2px 1px 12px;border-bottom:1px solid #26374b}
+.view>.section-heading h2{font-size:21px;letter-spacing:-.35px}
+.view>.section-heading p{font-size:12px;line-height:1.5}
+.view>.workspace-section{margin-top:0}
+#navigation .nav-link{transition:background .15s ease,color .15s ease}
+#navigation .nav-link.active{box-shadow:inset 3px 0 0 #55d8b8}
+@media(max-width:640px){
+  #navigation .nav-link.active{box-shadow:inset 0 -2px 0 #55d8b8}
+  .view>.section-heading{margin-top:4px}
+}
