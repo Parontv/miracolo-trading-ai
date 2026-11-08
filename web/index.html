@@ -37,10 +37,10 @@
       <section class="view active" id="view-dashboard">
         <div class="section-heading"><div><h2>Stato del sistema</h2><p>Controllo rapido dell'operatività crypto.</p></div><span class="tag">CRYPTO ONLY · 24/7 TARGET</span></div>
         <div class="metric-grid">
-          <article class="metric"><span>Valore portafoglio</span><strong>--</strong><small>In attesa del collegamento exchange</small></article>
-          <article class="metric"><span>Posizioni aperte</span><strong>--</strong><small>Dato non disponibile</small></article>
-          <article class="metric"><span>P&amp;L giornaliero</span><strong>--</strong><small>Dato non disponibile</small></article>
-          <article class="metric"><span>Ordini attivi</span><strong>--</strong><small>Dato non disponibile</small></article>
+          <article class="metric"><span>Valore portafoglio</span><strong id="metric-portfolio">--</strong><small id="metric-portfolio-note">In attesa del collegamento exchange</small></article>
+          <article class="metric"><span>Posizioni aperte</span><strong id="metric-positions">--</strong><small id="metric-positions-note">Dato non disponibile</small></article>
+          <article class="metric"><span>P&amp;L non realizzato</span><strong id="metric-pnl">--</strong><small id="metric-pnl-note">Dato non disponibile</small></article>
+          <article class="metric"><span>Bot attivi</span><strong id="metric-bots">--</strong><small id="metric-bots-note">Dato non disponibile</small></article>
         </div>
         <div class="content-grid">
           <article class="panel"><div class="panel-title"><div><h3>Motore di esecuzione</h3><p>Hummingbot</p></div><span class="pill muted" id="engine-status">In attesa del backend</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime non disponibile</strong><p>Qui vedrai stato del bot, exchange, connettore e ultima sincronizzazione.</p></div></article>
