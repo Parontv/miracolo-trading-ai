@@ -46,13 +46,14 @@
           <article class="panel"><div class="panel-title"><div><h3>Motore di esecuzione</h3><p>Hummingbot</p></div><span class="pill muted" id="engine-status">In attesa del backend</span></div><div class="empty-state"><div class="empty-icon">⇄</div><strong>Runtime non disponibile</strong><p>Qui vedrai stato del bot, exchange, connettore e ultima sincronizzazione.</p></div></article>
           <article class="panel"><div class="panel-title"><div><h3>Analisi AI</h3><p>TradingAgents</p></div><span class="pill muted">Disattivato</span></div><div class="empty-state"><div class="empty-icon">◎</div><strong>Analisi non avviata</strong><p>Le analisi saranno consultive. L'AI non potrà inviare ordini direttamente.</p></div></article>
         </div>
-        <article class="panel"><div class="panel-title"><div><h3>Server Condor</h3><p>Stato dei server Hummingbot autorizzati</p></div><button class="refresh-button" id="refresh-servers" type="button">Aggiorna</button></div><div id="condor-servers" class="server-list"><p class="muted">Lettura server in corso…</p></div></article>
-        <article class="panel"><div class="panel-title"><div><h3>Portafoglio server</h3><p id="portfolio-server-label">Seleziona un server per leggere i saldi</p></div><span class="pill muted" id="portfolio-state">Non selezionato</span></div><div id="portfolio-content" class="empty-row">I dati verranno caricati dall'API Condor, senza forzare aggiornamenti sull'exchange.</div></article>
+        <article class="panel condor-optional"><div class="panel-title"><div><h3>Server Condor</h3><p>Integrazione server opzionale, non necessaria per il bot browser PAPER</p></div><button class="refresh-button" id="refresh-servers" type="button">Aggiorna</button></div><div id="condor-servers" class="server-list"><p class="muted">Lettura server in corso…</p></div></article>
+        <article class="panel condor-optional"><div class="panel-title"><div><h3>Portafoglio server</h3><p id="portfolio-server-label">Seleziona un server per leggere i saldi</p></div><span class="pill muted" id="portfolio-state">Non selezionato</span></div><div id="portfolio-content" class="empty-row">I dati verranno caricati dall'API Condor, senza forzare aggiornamenti sull'exchange.</div></article>
         <article class="panel"><div class="panel-title"><div><h3>Ultime attività</h3><p>Registro eventi e decisioni</p></div></div><div class="empty-row">Nessun evento registrato. Gli eventi appariranno dopo il collegamento del runtime.</div></article>
       </section>
 
       <section class="view" id="view-markets">
-        <div class="section-heading"><div><h2>Mercati crypto</h2><p>Tickers letti direttamente dai venue disponibili in Condor.</p></div><span class="tag">SOLO LETTURA</span></div>
+        <div class="section-heading"><div><h2>Mercati crypto</h2><p>Prezzi pubblici Binance, aggiornati mentre la pagina è attiva.</p></div><span class="tag">FEED PUBBLICO</span></div>
+        <article class="panel"><div class="panel-title"><div><h3>Watchlist browser</h3><p>Coppie monitorate dal bot PAPER</p></div><span class="pill muted">BTC · ETH · QNT</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot dalla sezione Strategie per collegare i dati live.</p></div></article>
         <article class="panel market-controls">
           <label>Server Condor<select id="market-server"><option value="">Caricamento server…</option></select></label>
           <label>Exchange / venue<select id="market-connector" disabled><option value="">Seleziona un server</option></select></label>
@@ -76,7 +77,7 @@
           </div>
         </article>
         <div class="content-grid">
-          <article class="panel"><div class="panel-title"><div><h3>Mercati monitorati</h3><p>Prezzo live · variazione 24 ore</p></div><span class="pill muted">Binance public feed</span></div><div id="browser-market-list" class="browser-list"><p class="muted">Avvia il bot per collegare i dati.</p></div></article>
+          
           <article class="panel"><div class="panel-title"><div><h3>Regole strategia</h3><p>Long spot simulato, senza leva</p></div></div>
             <div class="settings-list browser-rules">
               <div><span>Ingresso</span><strong>Incrocio EMA 9 sopra EMA 21 + RSI 14 oltre 50</strong></div>
@@ -88,12 +89,14 @@
             <p class="browser-disclaimer">Parametri iniziali sperimentali, non ottimizzati né validati su backtest. Non sono una raccomandazione finanziaria.</p>
           </article>
         </div>
-        <article class="panel"><div class="panel-title"><div><h3>Posizioni PAPER</h3><p>Valore e livelli di protezione</p></div></div><div id="browser-position-list" class="browser-list"><p class="muted">Nessuna posizione PAPER aperta.</p></div></article>
-        <article class="panel"><div class="panel-title"><div><h3>Registro operazioni</h3><p>Risultati simulati, commissioni e motivi di uscita</p></div></div><div id="browser-trade-list" class="browser-list"><p class="muted">Nessuna operazione simulata.</p></div></article>
+        
+        
         <article class="panel"><div class="panel-title"><div><h3>Eventi del bot</h3><p>Connessione, segnali e decisioni</p></div></div><div id="browser-event-list" class="browser-list"><p class="muted">Nessun evento registrato.</p></div></article>
       </section>
       <section class="view" id="view-activity">
-        <div class="section-heading"><div><h2>Bot e posizioni</h2><p>Monitoraggio in sola lettura dello stato operativo Condor/Hummingbot.</p></div><span class="tag">NESSUN COMANDO DI TRADING</span></div>
+        <div class="section-heading"><div><h2>Operazioni PAPER</h2><p>Posizioni simulate e storico salvato nel browser.</p></div><span class="tag">NESSUN ORDINE REALE</span></div>
+        <article class="panel"><div class="panel-title"><div><h3>Posizioni aperte</h3><p>Valore e livelli di protezione</p></div></div><div id="browser-position-list" class="browser-list"><p class="muted">Nessuna posizione PAPER aperta.</p></div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Storico operazioni</h3><p>Risultati simulati</p></div></div><div id="browser-trade-list" class="browser-list"><p class="muted">Nessuna operazione simulata.</p></div></article>
         <article class="panel activity-controls">
           <label>Server<select id="activity-server"><option value="">Caricamento server…</option></select></label>
           <button class="refresh-button" id="refresh-activity" type="button">Aggiorna stato</button>
