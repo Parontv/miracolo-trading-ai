@@ -89,7 +89,6 @@ async function scanMarkets(env) {
   }
   try {
     const symbols = encodeURIComponent(SYMBOLS.join(","));
-    const url = `${DATA_BASE}/v1beta3/crypto/us/bars?symbols=${symbols}&timeframe=1Min&limit=100`;
     const result = await alpacaFetch(env, DATA_BASE, `/v1beta3/crypto/us/bars?symbols=${symbols}&timeframe=1Min&limit=100`);
     const barsBySymbol = result.bars || {};
     let inserted = 0;
@@ -118,6 +117,12 @@ async function scanMarkets(env) {
   }
 }
 
+function freshBotStatus(row) {
+  if (!row) return { status: "NOT_STARTED", message: "Worker non ancora avviato", last_heartbeat: null, last_cycle: null };
+  const age = row.last_heartbeat ? Date.now() - Date.parse(row.last_heartbeat) : Infinity;
+  return age > 180000 ? { ...row, status: "STALE", message: "Heartbeat del worker scaduto" } : row;
+}
+
 async function routeApi(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -126,15 +131,10 @@ async function routeApi(request, env) {
   if (path === "/api/health") {
     const status = await env.DB.prepare("SELECT status, message, last_heartbeat, last_cycle FROM worker_status WHERE id=1").first();
     const count = await env.DB.prepare("SELECT COUNT(*) AS total FROM signals").first();
+    const bot = freshBotStatus(status);
     return response({
       ok: true, service: "miracolo", mode: "PAPER", live_enabled: false, broker: "alpaca",
-      alpaca_configured: configured(env), bot: {
-        status: status?.status || "NOT_STARTED",
-        message: status?.message || "Worker non ancora avviato",
-        last_heartbeat: status?.last_heartbeat || null,
-        last_cycle: status?.last_cycle || null,
-        signals_recorded: count?.total || 0,
-      },
+      alpaca_configured: configured(env), bot: { ...bot, signals_recorded: count?.total || 0 },
       execution_enabled: false,
     });
   }
@@ -142,7 +142,7 @@ async function routeApi(request, env) {
   if (path === "/api/bot/status") {
     const bot = await env.DB.prepare("SELECT status, message, last_heartbeat, last_cycle FROM worker_status WHERE id=1").first();
     const count = await env.DB.prepare("SELECT COUNT(*) AS total FROM signals").first();
-    return response({ ok: true, bot: { ...(bot || { status: "NOT_STARTED" }), signals_recorded: count?.total || 0 }, execution_enabled: false });
+    return response({ ok: true, bot: { ...freshBotStatus(bot), signals_recorded: count?.total || 0 }, execution_enabled: false });
   }
 
   if (path === "/api/bot/signals") {
