@@ -44,6 +44,8 @@
             <div><span>Broker</span><strong>Alpaca PAPER</strong></div>
             <div><span>Stato conto</span><strong id="account-state">--</strong></div>
             <div><span>Trading LIVE</span><strong>Disabilitato</strong></div>
+            <div><span>Bot crypto</span><strong id="bot-state">In attesa del worker</strong></div>
+            <div><span>Ultima scansione</span><strong id="bot-last-cycle">--</strong></div>
           </div>
           <p class="browser-disclaimer" id="alpaca-detail">La dashboard non riceve mai le chiavi API o il token privato. Il proxy sul server inoltra le richieste autorizzate.</p>
           <button class="refresh-button" id="refresh-status" type="button">Aggiorna dati</button>
@@ -59,6 +61,7 @@
       </section>
       <section class="view" id="view-activity">
         <div class="section-heading"><div><h2>Operazioni</h2><p>Ordini aperti effettivamente presenti sul conto Alpaca PAPER.</p></div><span class="tag">DATI BROKER</span></div>
+        <article class="panel"><div class="panel-title"><div><h3>Segnali del bot</h3><p>Incrocio EMA 9/21 su barre crypto a 1 minuto. Segnali registrati, non ordini.</p></div><span class="pill muted" id="signals-state">In attesa</span></div><div id="signal-list" class="activity-list"><p class="muted">Nessun segnale registrato.</p></div></article>
         <article class="panel"><div class="panel-title"><div><h3>Ordini aperti</h3><p>Stato e dettagli restituiti da Alpaca</p></div><span class="pill muted" id="orders-state">In attesa</span></div><div id="order-list" class="activity-list"><p class="muted">Dati Alpaca non ancora caricati.</p></div></article>
         <article class="panel"><div class="empty-row">L'invio ordini resta disabilitato finché il Risk Gateway, il worker persistente e il journal non sono completati e verificati.</div></article>
       </section>
@@ -69,8 +72,9 @@
           <div><span>Modalità LIVE</span><strong>Disabilitata</strong></div>
           <div><span>Invio ordini</span><strong>Bloccato durante lo sviluppo</strong></div>
           <div><span>Asset previsti</span><strong>BTC/USD · ETH/USD · QNT/USD, previa verifica broker</strong></div>
-          <div><span>Risk Gateway</span><strong>Da completare e testare</strong></div>
-          <div><span>Worker 24/7</span><strong>Da implementare su host persistente</strong></div>
+          <div><span>Numero operazioni giornaliere</span><strong>Nessun tetto fisso</strong></div>
+          <div><span>Limiti di rischio</span><strong>Esposizione, ordini/minuto e perdita massima</strong></div>
+          <div><span>Worker 24/7</span><strong>Scanner continuo, esecuzione ancora bloccata</strong></div>
         </div>
       </section>
       <section class="view" id="view-settings">
