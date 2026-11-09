@@ -8,6 +8,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env.runtime
+    environment:
+      MIRACOLO_STATE_DB: /data/miracolo.sqlite3
+    volumes:
+      - miracolo-state:/data
     healthcheck:
       test:
         - CMD
@@ -19,6 +23,25 @@ services:
       retries: 3
       start_period: 15s
 
+  miracolo-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+    container_name: miracolo-worker
+    command: ["python", "-m", "miracolo_trading.worker"]
+    network_mode: host
+    restart: unless-stopped
+    env_file:
+      - .env.runtime
+    environment:
+      MIRACOLO_STATE_DB: /data/miracolo.sqlite3
+      MIRACOLO_POLL_SECONDS: "60"
+    volumes:
+      - miracolo-state:/data
+    depends_on:
+      miracolo-api:
+        condition: service_started
+
   miracolo-web:
     image: caddy:2.10-alpine
     container_name: miracolo-web
@@ -29,3 +52,6 @@ services:
     volumes:
       - ./Caddyfile.runtime:/etc/caddy/Caddyfile:ro
       - ./web:/srv/web:ro
+
+volumes:
+  miracolo-state:
