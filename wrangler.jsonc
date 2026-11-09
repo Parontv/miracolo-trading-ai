@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "miracolo-trading-ai",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-11-09",
+  "assets": {
+    "directory": "./web",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "miracolo-trading-ai",
+      "database_id": "CREATE_D1_DATABASE_AND_REPLACE_ID"
+    }
+  ],
+  "triggers": {
+    "crons": ["* * * * *"]
+  }
+}
