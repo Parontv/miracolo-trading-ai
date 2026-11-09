@@ -21,7 +21,9 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 | Journal D1 | Segnali, cursori, prenotazioni rischio e schema registro ordini pronti; database da creare nell'account Cloudflare |
 | Lettura privata Alpaca PAPER | Implementata nel Worker, richiede secrets e Cloudflare Access |
 | Risk Gateway | Modulo Cloudflare e policy Python implementati e testati; controlli non ancora collegati all'invio ordini |
-| Motore di esecuzione e riconciliazione | Schema persistente predisposto; lifecycle ancora da implementare e testare end-to-end |
+| Riconciliazione broker/journal | Implementata in sola lettura, con controlli su posizioni, ordini e stop; da verificare su account reale PAPER |
+| Macchina a stati ordini | Implementata e testata, non ancora collegata all'invio ordini |
+| Motore di esecuzione end-to-end | Ancora da implementare e testare |
 | Invio ordini | **Bloccato** |
 | LIVE | **Disabilitato** |
 
@@ -43,5 +45,5 @@ Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Usa e
 python -m unittest discover -s tests -v
 node --check web/app.js
 node --input-type=module --check < cloudflare/worker.js
-node --test tests/cloudflare-worker.test.mjs
+node --test tests/cloudflare-worker.test.mjs tests/cloudflare-risk-gateway.test.mjs tests/cloudflare-order-lifecycle.test.mjs
 ``
