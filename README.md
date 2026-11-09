@@ -7,7 +7,7 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 - **Alpaca PAPER**: unica integrazione broker. L'host API è fissato nel codice a `https://paper-api.alpaca.markets`.
 - **Risk Gateway Miracolo**: unico punto autorizzato a validare le future richieste d'ordine. Non è ancora completo.
 - **Worker persistente**: processo server-side da implementare per la continuità 24/7.
-- **Dashboard web**: pannello di stato e controllo, senza credenziali broker nel browser.
+- **Dashboard web**: pannello di stato e lettura conto/posizioni/ordini Alpaca, senza credenziali broker o token privati nel browser.
 - **Condor**: riferimento per organizzazione e usabilità della UI; non è una dipendenza runtime e non invia ordini.
 - **Hummingbot, Binance browser simulator e TradingAgents**: non fanno parte del percorso di esecuzione.
 
@@ -19,7 +19,7 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 | Credenziali conservate sul server | Previsto dal runtime |
 | Dashboard semplificata mobile-first | Implementata in questo ramo |
 | Health check senza dati sensibili | Implementato |
-| Lettura privata account, asset, ordini e posizioni | API protetta implementata, sessione dashboard da completare |
+| Lettura privata account, asset, ordini e posizioni | Proxy Caddy server-side implementato; accesso remoto subordinato a Cloudflare Access |
 | Risk Gateway centralizzato | Da implementare |
 | Worker persistente 24/7 | Da implementare |
 | Journal persistente e riconciliazione ordini | Da implementare |
@@ -30,7 +30,7 @@ La presenza delle credenziali sul server non equivale a un collegamento autentic
 
 ## Configurazione runtime
 
-Le credenziali devono essere configurate esclusivamente sul server, nel file non versionato `.env.runtime`:
+Le credenziali e il token privato devono essere configurati esclusivamente sul server, nel file non versionato `.env.runtime`. Caddy inoltra il token al backend server-side; il browser non lo riceve. Per accesso remoto è obbligatoria una policy Cloudflare Access:
 
 ```dotenv
 APCA_API_KEY_ID=<Alpaca PAPER key>
