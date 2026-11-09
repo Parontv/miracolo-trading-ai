@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import math
 import sqlite3
 from contextlib import contextmanager
 import time
@@ -34,6 +35,7 @@ class RiskSnapshot:
     daily_pnl_usd: float
     trading_mode: str = "PAPER"
     kill_switch: bool = False
+    open_position_symbols: tuple[str, ...] = ()
 
 
 class RiskGateway:
@@ -81,15 +83,19 @@ class RiskGateway:
             return False, "Asset is not allowlisted."
         if intent.side not in {"BUY", "SELL"}:
             return False, "Unsupported order side."
-        if intent.notional_usd <= 0 or intent.notional_usd > policy.max_order_notional_usd:
+        if (not math.isfinite(intent.notional_usd) or intent.notional_usd <= 0
+                or intent.notional_usd > policy.max_order_notional_usd):
             return False, "Order notional is outside the allowed range."
+        if not math.isfinite(snapshot.daily_pnl_usd):
+            return False, "Daily P&L snapshot is invalid."
         if intent.ai_generated and not policy.ai_agents_can_place_orders:
             return False, "AI-generated intents cannot submit orders directly."
         if intent.side == "BUY":
-            if snapshot.open_positions >= policy.max_open_positions:
-                return False, "Maximum open positions reached."
             if policy.require_stop_loss:
-                if (intent.stop_loss_price is None or intent.reference_price <= 0
+                if (intent.stop_loss_price is None
+                        or not math.isfinite(intent.reference_price)
+                        or not math.isfinite(intent.stop_loss_price)
+                        or intent.reference_price <= 0
                         or intent.stop_loss_price <= 0
                         or intent.stop_loss_price >= intent.reference_price):
                     return False, "A valid protective stop price below the entry reference is required."
@@ -106,6 +112,18 @@ class RiskGateway:
                 if duplicate:
                     db.rollback()
                     return False, "Duplicate order intent."
+                pending = db.execute(
+                    "SELECT DISTINCT symbol FROM risk_reservations "
+                    "WHERE side='BUY' AND status IN ('RESERVED','SUBMITTED')"
+                ).fetchall()
+                held_symbols = set(snapshot.open_position_symbols)
+                pending_new_symbols = {row["symbol"] for row in pending
+                                       if row["symbol"] not in held_symbols}
+                if intent.side == "BUY" and intent.symbol not in held_symbols:
+                    projected_positions = snapshot.open_positions + len(pending_new_symbols)
+                    if projected_positions >= policy.max_open_positions:
+                        db.rollback()
+                        return False, "Maximum open positions reached."
                 recent = db.execute(
                     "SELECT COUNT(*) AS n FROM risk_reservations WHERE created_at>=?",
                     (now - 60,),
