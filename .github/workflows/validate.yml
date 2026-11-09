@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: '22'
       - run: node --check web/app.js
+      - run: node --input-type=module --check < cloudflare/worker.js
+      - name: Validate Wrangler configuration
+        run: node -e "JSON.parse(require('fs').readFileSync('wrangler.jsonc', 'utf8'))"
       - name: Verify dashboard does not contain a local trading simulator
         run: |
           ! grep -R -E 'browser-bot|binance\.vision|localStorage.*paper' web/
