@@ -63,6 +63,8 @@
         <div class="section-heading"><div><h2>Operazioni</h2><p>Ordini aperti effettivamente presenti sul conto Alpaca PAPER.</p></div><span class="tag">DATI BROKER</span></div>
         <article class="panel"><div class="panel-title"><div><h3>Segnali del bot</h3><p>Incrocio EMA 9/21 su barre crypto a 1 minuto. Segnali registrati, non ordini.</p></div><span class="pill muted" id="signals-state">In attesa</span></div><div id="signal-list" class="activity-list"><p class="muted">Nessun segnale registrato.</p></div></article>
         <article class="panel"><div class="panel-title"><div><h3>Ordini aperti</h3><p>Stato e dettagli restituiti da Alpaca</p></div><span class="pill muted" id="orders-state">In attesa</span></div><div id="order-list" class="activity-list"><p class="muted">Dati Alpaca non ancora caricati.</p></div></article>
+        <article class="panel"><div class="panel-title"><div><h3>Riconciliazione broker e journal</h3><p>Controllo in sola lettura tra ordini, posizioni Alpaca e registro locale</p></div><span class="pill muted" id="reconciliation-state">Da verificare</span></div><div id="reconciliation-list" class="activity-list"><p class="muted">Verifica non ancora eseguita.</p></div><button class="refresh-button" id="refresh-reconciliation" type="button">Verifica coerenza</button><p class="browser-disclaimer">La riconciliazione segnala discrepanze, ma non modifica né cancella ordini. L'invio ordini resta disabilitato.</p></article>
+
         <article class="panel"><div class="empty-row">L'invio ordini resta disabilitato finché il Risk Gateway, il worker persistente e il journal non sono completati e verificati.</div></article>
       </section>
       <section class="view" id="view-risk">
