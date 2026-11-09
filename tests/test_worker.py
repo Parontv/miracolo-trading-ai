@@ -16,6 +16,14 @@ class StrategyTests(unittest.TestCase):
         bars = [{"c": "100", "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(30)]
         self.assertIsNone(crossover_signal(bars))
 
+    def test_detects_buy_and_sell_crossovers(self):
+        rising = [{"c": "100", "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(29)]
+        rising.append({"c": "200", "t": "2026-01-01T00:29:00Z"})
+        falling = [{"c": "100", "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(29)]
+        falling.append({"c": "1", "t": "2026-01-01T00:29:00Z"})
+        self.assertEqual(crossover_signal(rising)["side"], "BUY")
+        self.assertEqual(crossover_signal(falling)["side"], "SELL")
+
     def test_crossover_compares_same_bar_indices(self):
         bars = [{"c": str(100 + i), "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(30)]
         self.assertIsNone(crossover_signal(bars))
