@@ -7,31 +7,22 @@ function mockDb() {
   return {
     state,
     prepare(sql) {
-      return {
-        bind(...values) {
-          return {
-            async run() {
-              state.writes += 1;
-              if (sql.startsWith("INSERT INTO worker_status")) {
-                state.status = {
-                  status: values[0],
-                  message: values[1],
-                  last_heartbeat: values[2],
-                  last_cycle: values[3],
-                };
-              }
-              return { meta: { changes: 1 } };
-            },
-            async first() {
-              if (sql.includes("COUNT(*)")) return { total: 0 };
-              return state.status;
-            },
-            async all() {
-              return { results: [] };
-            },
-          };
+      const statement = {
+        bind() { return statement; },
+        async run() {
+          state.writes += 1;
+          if (sql.startsWith("INSERT INTO worker_status")) {
+            state.status = { status: "WAITING_CREDENTIALS", message: "Credenziali Alpaca PAPER mancanti", last_heartbeat: new Date().toISOString(), last_cycle: null };
+          }
+          return { meta: { changes: 1 } };
         },
+        async first() {
+          if (sql.includes("COUNT(*)")) return { total: 0 };
+          return state.status;
+        },
+        async all() { return { results: [] }; },
       };
+      return statement;
     },
   };
 }
