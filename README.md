@@ -17,14 +17,14 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 |---|---|
 | Dashboard statica | Implementata |
 | Worker API Cloudflare | Implementata, da distribuire |
-| Cron scanner crypto EMA 9/21 | Implementato, da distribuire e configurare |
+| Cron scanner crypto EMA 9/21 | Implementato con cursori per simbolo, recupero dei bar persi e controllo dati stale; da distribuire |
 | Journal D1 | Schema pronto, database da creare nell'account Cloudflare |
 | Lettura privata Alpaca PAPER | Implementata nel Worker, richiede secrets e Cloudflare Access |
 | Risk Gateway | Implementato e testato nel runtime Python, da portare nel percorso Worker prima di abilitare ordini |
 | Invio ordini | **Bloccato** |
 | LIVE | **Disabilitato** |
 
-La scansione registra segnali, non ordini. Nessun ordine viene inviato da questa versione.
+La scansione interroga separatamente BTC/USD, ETH/USD e QNT/USD, usa solo barre da 1 minuto chiuse e controlla che i dati siano recenti. I cursori D1 consentono di recuperare i crossover delle barre non ancora elaborate dopo un ritardo del Cron. La scansione registra segnali, non ordini. Nessun ordine viene inviato da questa versione.
 
 ## Pubblicazione
 
