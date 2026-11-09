@@ -1,55 +1,51 @@
 # Miracolo Trading AI
 
-Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker e unico sistema di esecuzione**. L'interfaccia è una dashboard web: il bot e il runtime non dipendono dalla pagina aperta.
+Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker**. L'app è una dashboard web servita direttamente da Cloudflare Workers; la scansione usa un Cron Trigger ogni minuto e non dipende dal browser aperto né da un server Linux sempre acceso.
 
-## Architettura scelta
+## Architettura
 
-- **Alpaca PAPER**: unica integrazione broker. L'host API è fissato nel codice a `https://paper-api.alpaca.markets`.
-- **Risk Gateway Miracolo**: unico punto autorizzato a validare le future richieste d'ordine. Non è ancora completo.
-- **Worker persistente**: processo server-side da implementare per la continuità 24/7.
-- **Dashboard web**: pannello di stato e lettura conto/posizioni/ordini Alpaca, senza credenziali broker o token privati nel browser.
-- **Condor**: riferimento per organizzazione e usabilità della UI; non è una dipendenza runtime e non invia ordini.
-- **Hummingbot, Binance browser simulator e TradingAgents**: non fanno parte del percorso di esecuzione.
+- **Cloudflare Worker**: API same-origin e scanner schedulato.
+- **Cloudflare D1**: journal persistente di stato e segnali.
+- **Cloudflare Workers Static Assets**: dashboard mobile-first dalla cartella `web/`.
+- **Alpaca PAPER**: unica integrazione broker; le chiavi sono Worker Secrets, mai esposte al browser.
+- **Cloudflare Access**: protegge gli endpoint privati che leggono conto, posizioni, ordini e asset.
+- **Condor**: solo riferimento UI/UX. Hummingbot e simulatori browser non sono nel percorso di esecuzione.
 
 ## Stato reale
 
 | Componente | Stato |
 |---|---|
-| Adapter Alpaca PAPER | Implementato |
-| Credenziali conservate sul server | Previsto dal runtime |
-| Dashboard semplificata mobile-first | Implementata |
-| Health check senza dati sensibili | Implementato |
-| Lettura privata account, asset, ordini e posizioni | Proxy Caddy server-side implementato; accesso remoto subordinato a Cloudflare Access |
-| Risk Gateway persistente | Implementato e testato con idempotenza, kill switch, limiti di esposizione/perdita e rate limit; non ancora collegato all'invio ordini |
-| Worker persistente 24/7 | Scanner crypto persistente con journal SQLite, segnali EMA 9/21 e stato visibile in dashboard; esecuzione ordini ancora disabilitata |
-| Journal persistente e riconciliazione ordini | Da implementare |
-| Invio ordini | **Bloccato** fino al completamento dei controlli |
+| Dashboard statica | Implementata |
+| Worker API Cloudflare | Implementata, da distribuire |
+| Cron scanner crypto EMA 9/21 | Implementato, da distribuire e configurare |
+| Journal D1 | Schema pronto, database da creare nell'account Cloudflare |
+| Lettura privata Alpaca PAPER | Implementata nel Worker, richiede secrets e Cloudflare Access |
+| Risk Gateway | Implementato e testato nel runtime Python, da portare nel percorso Worker prima di abilitare ordini |
+| Invio ordini | **Bloccato** |
 | LIVE | **Disabilitato** |
 
-La presenza delle credenziali sul server non equivale a un collegamento autenticato verificato con Alpaca. La dashboard non inventa saldo, prezzi, P&L o operazioni.
+La scansione produce segnali, non ordini. Nessun ordine viene inviato da questa versione.
 
-## Configurazione runtime
+## Deploy Cloudflare
 
-Le credenziali e il token privato devono essere configurati esclusivamente sul server, nel file non versionato `.env.runtime`. Caddy inoltra il token al backend server-side; il browser non lo riceve. Per accesso remoto è obbligatoria una policy Cloudflare Access:
+La configurazione è in `wrangler.jsonc`; la cartella statica è `web/`, il Worker è `cloudflare/worker.js` e lo schema D1 è `migrations/0001_init.sql`.
 
-```dotenv
-APCA_API_KEY_ID=<Alpaca PAPER key>
-APCA_API_SECRET_KEY=<Alpaca PAPER secret>
-ALPACA_API_TIMEOUT=8
-MIRACOLO_API_TOKEN=<random private token>
-```
+1. Crea un database D1 chiamato `miracolo-trading-ai` con `npx wrangler@4 d1 create miracolo-trading-ai` e inserisci il suo ID nel campo `database_id` di `wrangler.jsonc`.
+2. Crea un API Token Cloudflare con permessi Workers Scripts:Edit e D1:Edit e recupera l'Account ID.
+3. In GitHub, aggiungi i repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `APCA_API_KEY_ID`, `APCA_API_SECRET_KEY`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`.
+4. Configura Cloudflare Access per l'hostname `<worker>.<workers-subdomain>.workers.dev`, con una policy Allow limitata alla tua email. L'audience tag dell'app va salvato in `ACCESS_AUD`; il team domain senza `.cloudflareaccess.com` va in `ACCESS_TEAM_DOMAIN`.
+5. Il workflow GitHub `Deploy Cloudflare` applica le migrazioni D1, carica i Worker Secrets e distribuisce Worker e dashboard a ogni push su `main`.
 
-Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Consultare [docs/alpaca-paper.md](docs/alpaca-paper.md) e [docs/runtime-deployment.md](docs/runtime-deployment.md).
+Dopo il primo deploy, Cloudflare assegna un URL HTTPS `https://miracolo-trading-ai.<workers-subdomain>.workers.dev`. Il sottodominio dipende dal tuo account e non va indovinato.
 
-## Runtime 24/7
+## Sicurezza
 
-Il servizio `miracolo-worker` esegue una scansione ogni 60 secondi, recupera barre crypto a 1 minuto da Alpaca, calcola segnali EMA 9/21 e registra i segnali in SQLite. Non invia ordini. Una pagina web e Cloudflare Workers non sono un processo Python persistente. Per il bot continuo serve un host Linux sempre acceso, per esempio un PC dedicato o un VPS, con Docker e riavvio automatico dei servizi.
+Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Usa esclusivamente credenziali Alpaca PAPER. Il codice non abilita LIVE e non invia ordini. Prima di qualsiasi esecuzione PAPER dovranno essere completati Risk Gateway, riconciliazione ordini e ciclo di protezione stop-loss end-to-end.
 
-## Test
+## Test locali
 
 ```bash
 python -m unittest discover -s tests -v
 node --check web/app.js
-```
-
-Nessun profitto è garantito. PAPER è un ambiente di collaudo e non dimostra che una strategia sarà profittevole in LIVE.
+node --input-type=module --check < cloudflare/worker.js
+``
