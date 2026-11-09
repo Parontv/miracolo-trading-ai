@@ -131,7 +131,7 @@ class ApiAuthTests(unittest.TestCase):
             "test-session-token",
         )
         self.assertEqual(status, "423 Locked")
-        self.assertEqual(payload["error"], "execution_disabled_until_risk_gateway_and_worker_are_ready")
+        self.assertEqual(payload["error"], "execution_disabled_until_risk_gateway_and_end_to_end_paper_validation")
         self.assertEqual(len(self.paper.submitted), 0)
 
     def test_non_loopback_is_blocked(self):
