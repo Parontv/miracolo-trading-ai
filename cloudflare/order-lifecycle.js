@@ -2,11 +2,11 @@ const TRANSITIONS = Object.freeze({
   NEW: ["RISK_RESERVED", "REJECTED"],
   RISK_RESERVED: ["ENTRY_SUBMITTED", "REJECTED", "FAILED"],
   ENTRY_SUBMITTED: ["ENTRY_PARTIALLY_FILLED", "ENTRY_FILLED", "CANCELLED", "FAILED", "EMERGENCY_EXIT_REQUIRED"],
-  ENTRY_PARTIALLY_FILLED: ["ENTRY_PARTIALLY_FILLED", "ENTRY_FILLED", "CANCELLED", "EMERGENCY_EXIT_REQUIRED", "FAILED"],
+  ENTRY_PARTIALLY_FILLED: ["ENTRY_PARTIALLY_FILLED", "ENTRY_FILLED", "EMERGENCY_EXIT_REQUIRED"],
   ENTRY_FILLED: ["PROTECTION_SUBMITTED", "EMERGENCY_EXIT_REQUIRED"],
-  PROTECTION_SUBMITTED: ["PROTECTED", "EMERGENCY_EXIT_REQUIRED", "FAILED"],
+  PROTECTION_SUBMITTED: ["PROTECTED", "EMERGENCY_EXIT_REQUIRED"],
   PROTECTED: ["EXIT_SUBMITTED", "EMERGENCY_EXIT_REQUIRED"],
-  EXIT_SUBMITTED: ["CLOSED", "PROTECTED", "EMERGENCY_EXIT_REQUIRED", "FAILED"],
+  EXIT_SUBMITTED: ["CLOSED", "PROTECTED", "EMERGENCY_EXIT_REQUIRED"],
   EMERGENCY_EXIT_REQUIRED: ["EMERGENCY_EXIT_SUBMITTED"],
   EMERGENCY_EXIT_SUBMITTED: ["CLOSED", "EMERGENCY_EXIT_REQUIRED"],
   CLOSED: [],
@@ -34,6 +34,12 @@ export function validateOrderTransition(current, next, facts = {}) {
       (!positive(facts.filledQty))) {
     return { allowed: false, reason: "filled_quantity_required" };
   }
+  if (next === "ENTRY_SUBMITTED" && !facts.entryOrderId) {
+    return { allowed: false, reason: "entry_order_id_required" };
+  }
+  if (next === "EXIT_SUBMITTED" && !facts.exitOrderId) {
+    return { allowed: false, reason: "exit_order_id_required" };
+  }
   if (next === "PROTECTION_SUBMITTED") {
     if (!facts.stopOrderId || !positive(facts.stopPrice) || !positive(facts.stopLimitPrice)) {
       return { allowed: false, reason: "protective_stop_details_required" };
@@ -53,8 +59,12 @@ export function validateOrderTransition(current, next, facts = {}) {
       return { allowed: false, reason: "broker_stop_not_active" };
     }
   }
-  if (next === "CLOSED" && Number(facts.remainingQty || 0) > 0) {
-    return { allowed: false, reason: "position_still_open" };
+  if (next === "CLOSED") {
+    if (facts.remainingQty === null || facts.remainingQty === undefined || facts.remainingQty === "" ||
+        !Number.isFinite(Number(facts.remainingQty)) || Number(facts.remainingQty) < 0) {
+      return { allowed: false, reason: "remaining_quantity_unknown" };
+    }
+    if (Number(facts.remainingQty) > 0) return { allowed: false, reason: "position_still_open" };
   }
   if (next === "EMERGENCY_EXIT_SUBMITTED" && !facts.emergencyOrderId) {
     return { allowed: false, reason: "emergency_order_id_required" };
