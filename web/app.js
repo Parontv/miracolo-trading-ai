@@ -193,7 +193,49 @@ async function loadBrokerData() {
   document.querySelector("#assets-state").textContent = `${assets.length} asset`;
 }
 
+async function refreshReconciliation() {
+  const state = document.querySelector("#reconciliation-state");
+  const box = document.querySelector("#reconciliation-list");
+  if (!state || !box) return;
+  state.textContent = "Verifica in corso";
+  try {
+    const data = await apiGet("/api/alpaca/reconciliation");
+    const report = data.reconciliation || {};
+    const issues = Array.isArray(report.issues) ? report.issues : [];
+    state.textContent = report.status === "IN_SYNC" ? "Coerente" : "Verifica richiesta";
+    state.className = report.status === "IN_SYNC" ? "pill online" : "pill muted";
+    box.replaceChildren();
+    if (!issues.length) {
+      message(box, "Nessuna discrepanza rilevata tra le posizioni, gli ordini attivi e il journal.");
+    } else {
+      const labels = {
+        ENTRY_ORDER_NOT_FOUND: "Ordine di entrata non trovato su Alpaca",
+        FILLED_POSITION_WITHOUT_ACTIVE_STOP: "Posizione eseguita senza stop attivo",
+        BROKER_POSITION_MISSING_FOR_FILLED_JOURNAL: "Posizione registrata nel journal ma assente su Alpaca",
+        UNTRACKED_BROKER_POSITION: "Posizione Alpaca non associata al journal",
+        UNTRACKED_BROKER_ORDER: "Ordine attivo Alpaca non associato al journal",
+      };
+      issues.forEach((issue) => row(
+        box,
+        labels[issue.type] || issue.type,
+        issue.client_order_id || issue.broker_order_id || "Controllo richiesto",
+        issue.symbol || "Asset",
+        "negative"
+      ));
+    }
+    const checked = document.createElement("small");
+    checked.className = "muted";
+    checked.textContent = report.checked_at ? `Ultimo controllo: ${new Date(report.checked_at).toLocaleString("it-IT")}` : "";
+    box.append(checked);
+  } catch (error) {
+    state.textContent = "Non disponibile";
+    state.className = "pill muted";
+    message(box, `Riconciliazione non riuscita: ${error.message}. Verifica Cloudflare Access e Alpaca PAPER.`);
+  }
+}
+
 document.querySelector("#refresh-status")?.addEventListener("click", refreshStatus);
+document.querySelector("#refresh-reconciliation")?.addEventListener("click", refreshReconciliation);
 refreshStatus();
 refreshBotStatus();
 document.addEventListener("visibilitychange", () => {
