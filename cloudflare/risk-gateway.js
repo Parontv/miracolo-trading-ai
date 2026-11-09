@@ -10,8 +10,16 @@ export const DEFAULT_RISK_POLICY = Object.freeze({
   allowAiGeneratedOrders: false,
 });
 
+function finiteNumber(value) {
+  return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+}
+
 function finitePositive(value) {
-  return Number.isFinite(Number(value)) && Number(value) > 0;
+  return finiteNumber(value) && Number(value) > 0;
+}
+
+function nonnegativeInteger(value) {
+  return finiteNumber(value) && Number.isInteger(Number(value)) && Number(value) >= 0;
 }
 
 export function evaluateRisk(intent, snapshot, policy = DEFAULT_RISK_POLICY) {
@@ -37,8 +45,11 @@ export function evaluateRisk(intent, snapshot, policy = DEFAULT_RISK_POLICY) {
     return { allowed: false, reason: "ai_order_not_allowed" };
   }
 
+  if (typeof snapshot.killSwitch !== "boolean") {
+    return { allowed: false, reason: "kill_switch_state_unknown" };
+  }
   const ordersLastMinute = Number(snapshot.ordersLastMinute);
-  if (!Number.isInteger(ordersLastMinute) || ordersLastMinute < 0) {
+  if (!nonnegativeInteger(snapshot.ordersLastMinute)) {
     return { allowed: false, reason: "order_rate_unknown" };
   }
   if (ordersLastMinute >= policy.maxOrdersPerMinute) {
@@ -47,13 +58,13 @@ export function evaluateRisk(intent, snapshot, policy = DEFAULT_RISK_POLICY) {
 
   if (side === "BUY") {
     const dailyPnlUsd = Number(snapshot.dailyPnlUsd);
-    if (!Number.isFinite(dailyPnlUsd)) return { allowed: false, reason: "daily_pnl_unknown" };
+    if (!finiteNumber(snapshot.dailyPnlUsd)) return { allowed: false, reason: "daily_pnl_unknown" };
     if (dailyPnlUsd <= -policy.maxDailyLossUsd) return { allowed: false, reason: "daily_loss_limit" };
 
     const openPositions = Number(snapshot.openPositions);
-    const pendingBuyReservations = Number(snapshot.pendingBuyReservations || 0);
-    if (!Number.isInteger(openPositions) || openPositions < 0 ||
-        !Number.isInteger(pendingBuyReservations) || pendingBuyReservations < 0) {
+    const pendingRaw = snapshot.pendingBuyReservations === undefined ? 0 : snapshot.pendingBuyReservations;
+    const pendingBuyReservations = Number(pendingRaw);
+    if (!nonnegativeInteger(snapshot.openPositions) || !nonnegativeInteger(pendingRaw)) {
       return { allowed: false, reason: "position_count_unknown" };
     }
     if (openPositions + pendingBuyReservations >= policy.maxOpenPositions) {
