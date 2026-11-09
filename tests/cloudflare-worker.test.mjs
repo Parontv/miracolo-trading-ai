@@ -129,3 +129,29 @@ test("scanner only creates EMA crossover signals from fully closed bars", async 
     globalThis.fetch = originalFetch;
   }
 });
+
+test("scanner degrades instead of trusting stale market data", async () => {
+  const DB = mockDb();
+  const originalFetch = globalThis.fetch;
+  const now = Date.now();
+  globalThis.fetch = async url => {
+    const symbol = new URL(url).searchParams.get("symbols");
+    const bars = Array.from({ length: 40 }, (_, index) => ({
+      t: new Date(now - (20 + 40 - index) * 60_000).toISOString(),
+      c: "100",
+    }));
+    return Response.json({ bars: { [symbol]: bars } });
+  };
+  try {
+    let scheduledPromise;
+    await worker.scheduled({}, { DB, APCA_API_KEY_ID: "paper-key", APCA_API_SECRET_KEY: "paper-secret" }, {
+      waitUntil(promise) { scheduledPromise = promise; },
+    });
+    await scheduledPromise;
+    assert.equal(DB.state.status.status, "DEGRADED");
+    assert.match(DB.state.status.message, /dati non aggiornati/);
+    assert.equal(DB.state.signals.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
