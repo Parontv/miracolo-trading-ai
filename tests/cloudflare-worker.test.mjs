@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker from "../cloudflare/worker.js";
+import worker, { buildReconciliation } from "../cloudflare/worker.js";
 
 function mockDb() {
   const state = { status: null, writes: 0, signals: [], cursors: new Map() };
@@ -220,4 +220,76 @@ test("scanner recovers from a cursor older than retained bar history", async () 
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("reconciliation reports matching protected journal and broker state as in sync", () => {
+  const result = buildReconciliation(
+    [{
+      client_order_id: "client-1",
+      symbol: "BTC/USD",
+      state: "PROTECTED",
+      entry_order_id: "entry-1",
+      filled_qty: 0.01,
+      stop_order_id: "stop-1",
+      stop_status: "accepted",
+    }],
+    [
+      { id: "entry-1", symbol: "BTC/USD", side: "buy", status: "filled" },
+      { id: "stop-1", symbol: "BTC/USD", side: "sell", status: "accepted" },
+    ],
+    [{ symbol: "BTC/USD", qty: "0.01" }],
+  );
+  assert.equal(result.status, "IN_SYNC");
+  assert.equal(result.issues.length, 0);
+});
+
+test("reconciliation flags filled positions without an active protective stop", () => {
+  const result = buildReconciliation(
+    [{
+      client_order_id: "client-2",
+      symbol: "ETH/USD",
+      state: "ENTRY_FILLED",
+      entry_order_id: "entry-2",
+      filled_qty: 0.5,
+    }],
+    [{ id: "entry-2", symbol: "ETH/USD", side: "buy", status: "filled" }],
+    [{ symbol: "ETH/USD", qty: "0.5" }],
+  );
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.ok(result.issues.some(issue => issue.type === "FILLED_POSITION_WITHOUT_ACTIVE_STOP"));
+});
+
+test("reconciliation detects untracked active orders and positions without flagging old closed orders", () => {
+  const result = buildReconciliation(
+    [],
+    [
+      { id: "old-1", symbol: "BTC/USD", side: "buy", status: "filled" },
+      { id: "open-1", symbol: "QNT/USD", side: "buy", status: "new" },
+    ],
+    [{ symbol: "ETH/USD", qty: "1" }],
+  );
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.ok(result.issues.some(issue => issue.type === "UNTRACKED_BROKER_ORDER"));
+  assert.ok(result.issues.some(issue => issue.type === "UNTRACKED_BROKER_POSITION"));
+  assert.equal(result.untracked_orders.length, 1);
+});
+
+test("reconciliation detects a filled journal row without a broker position", () => {
+  const result = buildReconciliation(
+    [{
+      client_order_id: "client-3",
+      symbol: "QNT/USD",
+      state: "PROTECTED",
+      entry_order_id: "entry-3",
+      filled_qty: 2,
+      stop_order_id: "stop-3",
+      stop_status: "accepted",
+    }],
+    [
+      { id: "entry-3", symbol: "QNT/USD", side: "buy", status: "filled" },
+      { id: "stop-3", symbol: "QNT/USD", side: "sell", status: "accepted" },
+    ],
+    [],
+  );
+  assert.ok(result.issues.some(issue => issue.type === "BROKER_POSITION_MISSING_FOR_FILLED_JOURNAL"));
 });
