@@ -24,6 +24,7 @@ async function alpacaFetch(env, base, path) {
       "APCA-API-KEY-ID": env.APCA_API_KEY_ID,
       "APCA-API-SECRET-KEY": env.APCA_API_SECRET_KEY,
     },
+    signal: AbortSignal.timeout(8000),
   });
   if (!result.ok) throw new Error(`alpaca_http_${result.status}`);
   return result.json();
@@ -89,13 +90,16 @@ async function scanMarkets(env) {
     return;
   }
   try {
-    const symbols = encodeURIComponent(SYMBOLS.join(","));
-    const result = await alpacaFetch(env, DATA_BASE, `/v1beta3/crypto/us/bars?symbols=${symbols}&timeframe=1Min&limit=100`);
-    const barsBySymbol = result.bars || {};
-    let inserted = 0;
-    for (const symbol of SYMBOLS) {
-      const bars = (barsBySymbol[symbol] || []).filter(bar => Number.isFinite(Number(bar.c)));
-      if (bars.length < 30) continue;
+    const scans = await Promise.all(SYMBOLS.map(async symbol => {
+      const query = new URLSearchParams({ symbols: symbol, timeframe: "1Min", limit: "100" });
+      const result = await alpacaFetch(env, DATA_BASE, `/v1beta3/crypto/us/bars?${query.toString()}`);
+      const now = Date.now();
+      const bars = (result.bars?.[symbol] || [])
+        .filter(bar => Number.isFinite(Number(bar.c)) && Number.isFinite(Date.parse(bar.t)))
+        .filter(bar => Date.parse(bar.t) + 60_000 <= now)
+        .sort((a, b) => Date.parse(a.t) - Date.parse(b.t));
+      if (bars.length < 30) return { symbol, inserted: 0, skipped: "history_insufficient" };
+
       const closes = bars.map(bar => Number(bar.c));
       const fast = ema(closes, 9);
       const slow = ema(closes, 21);
@@ -103,15 +107,21 @@ async function scanMarkets(env) {
       const previous = i - 1;
       const side = fast[previous] <= slow[previous] && fast[i] > slow[i] ? "BUY"
         : fast[previous] >= slow[previous] && fast[i] < slow[i] ? "SELL" : null;
-      if (!side) continue;
+      if (!side) return { symbol, inserted: 0, skipped: "no_crossover" };
+
       const barTime = bars[i].t;
       const signalKey = `${symbol}:${side}:${barTime}`;
       const write = await env.DB.prepare(
         "INSERT OR IGNORE INTO signals (signal_key, symbol, side, bar_time, price, fast_ema, slow_ema, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       ).bind(signalKey, symbol, side, barTime, closes[i], fast[i], slow[i], new Date().toISOString()).run();
-      inserted += write.meta?.changes || 0;
-    }
-    await updateStatus(env, "MONITORING", `Scansione completata. Nuovi segnali: ${inserted}`, new Date().toISOString());
+      return { symbol, inserted: write.meta?.changes || 0 };
+    }));
+    const inserted = scans.reduce((sum, scan) => sum + scan.inserted, 0);
+    const insufficient = scans.filter(scan => scan.skipped === "history_insufficient").map(scan => scan.symbol);
+    const message = insufficient.length
+      ? `Scansione parziale. Storico insufficiente: ${insufficient.join(", ")}. Nuovi segnali: ${inserted}`
+      : `Scansione completata. Nuovi segnali: ${inserted}`;
+    await updateStatus(env, insufficient.length ? "DEGRADED" : "MONITORING", message, new Date().toISOString());
   } catch (error) {
     await updateStatus(env, "DEGRADED", String(error.message || error).slice(0, 180));
     throw error;
