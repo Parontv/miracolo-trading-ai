@@ -53,18 +53,5 @@ services:
       - ./Caddyfile.runtime:/etc/caddy/Caddyfile:ro
       - ./web:/srv/web:ro
 
-  # Outbound-only tunnel: no public inbound port is opened on the host.
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: miracolo-cloudflared
-    network_mode: host
-    restart: unless-stopped
-    env_file:
-      - .env.runtime
-    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
-    depends_on:
-      miracolo-web:
-        condition: service_started
-
 volumes:
   miracolo-state:
