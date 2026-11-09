@@ -201,8 +201,11 @@ export function buildReconciliation(journalRows, brokerOrders, brokerPositions) 
     const filled = Number(entry.filled_qty || 0);
     const stopState = String(stopOrder?.status || entry.stop_status || "").toLowerCase();
     const stopTerminal = ["canceled", "cancelled", "rejected", "expired", "filled"].includes(stopState);
-    if (filled > 0 && entry.state !== "CLOSED" && (!entry.stop_order_id || !stopOrder || stopTerminal)) {
+    if (filled > 0 && (!entry.stop_order_id || !stopOrder || stopTerminal)) {
       issues.push({ type: "FILLED_POSITION_WITHOUT_ACTIVE_STOP", symbol: entry.symbol, client_order_id: entry.client_order_id });
+    }
+    if (filled > 0 && !positions.some(position => normalizeSymbol(position.symbol) === normalizeSymbol(entry.symbol))) {
+      issues.push({ type: "BROKER_POSITION_MISSING_FOR_FILLED_JOURNAL", symbol: entry.symbol, client_order_id: entry.client_order_id });
     }
   }
 
@@ -214,7 +217,11 @@ export function buildReconciliation(journalRows, brokerOrders, brokerPositions) 
 
   const trackedOrderIds = new Set(journal.flatMap(entry => [entry.entry_order_id, entry.stop_order_id, entry.exit_order_id]).filter(Boolean));
   const untrackedOrders = orders
-    .filter(order => SYMBOLS.includes(normalizeSymbol(order.symbol)) && !trackedOrderIds.has(order.id))
+    .filter(order => {
+      const status = String(order.status || "").toLowerCase();
+      const active = ["new", "accepted", "pending_new", "partially_filled", "held", "pending_replace", "pending_cancel"].includes(status);
+      return active && SYMBOLS.includes(normalizeSymbol(order.symbol)) && !trackedOrderIds.has(order.id);
+    })
     .map(order => ({ id: order.id, symbol: normalizeSymbol(order.symbol), side: order.side, status: order.status }));
   for (const order of untrackedOrders) {
     issues.push({ type: "UNTRACKED_BROKER_ORDER", symbol: order.symbol, broker_order_id: order.id });
