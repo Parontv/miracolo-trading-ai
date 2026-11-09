@@ -24,6 +24,11 @@ jobs:
             if [ -z "${!name}" ]; then
               echo 'ready=false' >> "$GITHUB_OUTPUT"
               echo "Waiting for GitHub secret: $name"
+              {
+                echo "## Miracolo deployment in attesa"
+                echo "Il deploy non è partito perché manca il secret `$name`."
+                echo "Aggiungi i tre valori richiesti nella pagina GitHub Settings > Secrets and variables > Actions."
+              } >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
           done
@@ -33,6 +38,8 @@ jobs:
           fi
           sed -i "s/CREATE_D1_DATABASE_AND_REPLACE_ID/$D1_ID/" wrangler.jsonc
           echo 'ready=true' >> "$GITHUB_OUTPUT"
+          echo "## Configurazione Cloudflare presente" >> "$GITHUB_STEP_SUMMARY"
+          echo "Procedo con migrazioni D1 e deploy Worker." >> "$GITHUB_STEP_SUMMARY"
       - name: Apply D1 migrations
         if: steps.config.outputs.ready == 'true'
         run: npx wrangler@4 d1 migrations apply DB --remote
