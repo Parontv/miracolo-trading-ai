@@ -57,6 +57,22 @@ class RiskGatewayTests(unittest.TestCase):
         self.assertEqual(self.gateway.reserve(third, self.snapshot, now=1025),
                          (False, "Order rate limit reached."))
 
+    def test_pending_buys_count_toward_position_limit(self):
+        self.assertTrue(self.gateway.reserve(self.intent, self.snapshot, now=1000)[0])
+        second = OrderIntent("miracolo-test-002", "ETH/USD", "BUY", 50, 100, 95)
+        self.assertTrue(self.gateway.reserve(second, self.snapshot, now=1061)[0])
+        third = OrderIntent("miracolo-test-003", "QNT/USD", "BUY", 50, 100, 95)
+        snapshot = RiskSnapshot(open_positions=1, open_orders=0, daily_pnl_usd=0)
+        self.assertEqual(self.gateway.reserve(third, snapshot, now=1122),
+                         (False, "Maximum open positions reached."))
+
+    def test_rejects_nan_order_values(self):
+        invalid = OrderIntent("miracolo-test-004", "BTC/USD", "BUY", float("nan"), 100, 95)
+        self.assertFalse(self.gateway.reserve(invalid, self.snapshot, now=1000)[0])
+        invalid_pnl = RiskSnapshot(0, 0, float("nan"))
+        valid = OrderIntent("miracolo-test-005", "BTC/USD", "BUY", 50, 100, 95)
+        self.assertFalse(self.gateway.reserve(valid, invalid_pnl, now=1000)[0])
+
     def test_mark_submitted_only_once(self):
         self.gateway.reserve(self.intent, self.snapshot, now=1000)
         self.assertTrue(self.gateway.mark_submitted(self.intent.client_order_id))
