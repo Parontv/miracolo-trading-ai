@@ -21,9 +21,13 @@ jobs:
           D1_ID: ${{ secrets.D1_DATABASE_ID }}
         run: |
           missing_secret=""
-          if [ -z "$CF_TOKEN" ]; then missing_secret="CLOUDFLARE_API_TOKEN"; fi
-          if [ -z "$CF_ACCOUNT" ]; then missing_secret="CLOUDFLARE_ACCOUNT_ID"; fi
-          if [ -z "$D1_ID" ]; then missing_secret="D1_DATABASE_ID"; fi
+          if [ -z "$CF_TOKEN" ]; then
+            missing_secret="CLOUDFLARE_API_TOKEN"
+          elif [ -z "$CF_ACCOUNT" ]; then
+            missing_secret="CLOUDFLARE_ACCOUNT_ID"
+          elif [ -z "$D1_ID" ]; then
+            missing_secret="D1_DATABASE_ID"
+          fi
           if [ -n "$missing_secret" ]; then
             echo 'ready=false' >> "$GITHUB_OUTPUT"
             echo "Waiting for GitHub secret: $missing_secret"
