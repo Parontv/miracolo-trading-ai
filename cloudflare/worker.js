@@ -107,10 +107,14 @@ async function scanMarkets(env) {
         "SELECT last_bar_time FROM scan_cursors WHERE symbol = ?",
       ).bind(symbol).first();
       let startIndex = bars.length - 1;
+      let historyGap = false;
       if (cursor?.last_bar_time) {
         startIndex = bars.findIndex(bar => Date.parse(bar.t) > Date.parse(cursor.last_bar_time));
         if (startIndex === -1) return { symbol, inserted: 0 };
-        if (startIndex < 21) return { symbol, inserted: 0, skipped: "history_gap" };
+        if (startIndex < 21) {
+          startIndex = 21;
+          historyGap = true;
+        }
       }
 
       const closes = bars.map(bar => Number(bar.c));
@@ -133,7 +137,7 @@ async function scanMarkets(env) {
       await env.DB.prepare(
         "INSERT INTO scan_cursors (symbol, last_bar_time, updated_at) VALUES (?, ?, ?) ON CONFLICT(symbol) DO UPDATE SET last_bar_time=excluded.last_bar_time, updated_at=excluded.updated_at",
       ).bind(symbol, bars[bars.length - 1].t, new Date().toISOString()).run();
-      return { symbol, inserted };
+      return { symbol, inserted, skipped: historyGap ? "history_gap" : null };
     }));
 
     const inserted = scans.reduce((sum, scan) => sum + scan.inserted, 0);
