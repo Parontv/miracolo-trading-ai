@@ -124,15 +124,15 @@ class ApiAuthTests(unittest.TestCase):
         self.assertEqual(payload["mode"], "PAPER")
         self.assertFalse(payload["live_enabled"])
 
-    def test_authenticated_order_reaches_paper_adapter(self):
+    def test_authenticated_order_is_locked_until_risk_gateway_is_ready(self):
         status, payload = self.request(
             "/api/alpaca/orders", "POST",
             {"symbol": "BTC/USD", "side": "buy", "notional": 25},
             "test-session-token",
         )
-        self.assertEqual(status, "200 OK")
-        self.assertEqual(payload["mode"], "PAPER")
-        self.assertEqual(len(self.paper.submitted), 1)
+        self.assertEqual(status, "423 Locked")
+        self.assertEqual(payload["error"], "execution_disabled_until_risk_gateway_and_worker_are_ready")
+        self.assertEqual(len(self.paper.submitted), 0)
 
     def test_non_loopback_is_blocked(self):
         body = b""
