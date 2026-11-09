@@ -1,38 +1,37 @@
-# Architettura e confini di integrazione
+# Architettura Miracolo
 
-## Decisione
-Condor diventa la base applicativa da integrare, non un semplice riferimento grafico. Miracolo aggiunge il livello di prodotto crypto-only e le protezioni deterministiche. Evitare una seconda dashboard e un secondo orchestratore quando Condor offre già queste funzioni.
+## Decisione unica
 
-## Componenti e responsabilità
-- **Condor**: dashboard web, interazione Telegram opzionale, agenti, routine, gestione dei server e flussi operativi. È l'applicazione di controllo.
-- **Hummingbot API**: backend autenticato per stato, portfolio, bot, executor e operazioni.
-- **Hummingbot**: connettori exchange, strategie, ordini e posizioni.
-- **Miracolo Risk Gateway**: policy crypto-only, approvazione deterministica, limiti, idempotenza, kill switch e journal.
-- **TradingAgents**: analisi e proposte. Non deve avere credenziali exchange né accesso diretto agli endpoint di invio ordini.
+Miracolo usa **Alpaca PAPER come unico broker e unico esecutore**. Il perimetro iniziale è crypto-only. LIVE è disabilitato e non deve essere configurabile dal frontend.
 
-## Confine di sicurezza obbligatorio
-Condor documenta flussi di trading e agenti autonomi che possono operare tramite Hummingbot API. Non si deve quindi collegare Condor direttamente a un account LIVE prima di aver verificato ogni percorso di invio ordini e averlo instradato attraverso il Risk Gateway.
+## Componenti
 
-1. Modalità iniziale PAPER; LIVE disabilitato.
-2. Gli agenti AI non inviano ordini direttamente.
-3. Ogni ordine passa dal Risk Gateway, che controlla policy, rischio, limiti e idempotenza.
-4. Bloccare l'esecuzione se dati, rischio, autenticazione o stato runtime non sono disponibili.
-5. Nessuna chiave exchange nel browser, nel repository o nei log.
-6. Non esporre Hummingbot API (porta 8000) o database su Internet pubblico.
-7. Usare rete privata autenticata, ad esempio Tailscale, e credenziali robuste.
-8. Disabilitare le funzioni DEX/Gateway nella prima fase: il perimetro è solo crypto CEX spot/perpetual, con modalità PAPER.
+- **Dashboard Miracolo**: interfaccia italiana, mobile-first, per stato, conto, posizioni, ordini e controlli.
+- **Alpaca adapter**: unico client broker, collegato esclusivamente all'endpoint PAPER.
+- **Risk Gateway**: unico punto autorizzato a validare ogni ordine prima dell'invio.
+- **Worker persistente**: processo server-side per analisi e gestione del bot 24/7, indipendente dal browser.
+- **Journal**: registro persistente e riconciliazione di segnali, ordini, esecuzioni e posizioni.
 
-## Interfaccia
-La dashboard web di Condor è la base da valutare e integrare. La shell statica Miracolo in `web/` resta solo un prototipo e non deve diventare una seconda interfaccia concorrente. L'interfaccia finale sarà in italiano e ottimizzata per Android.
+Condor è stato consultato soltanto come riferimento per organizzazione e usabilità dell'interfaccia. Non è una dipendenza runtime. Hummingbot, Binance browser simulator e TradingAgents non fanno parte del percorso di esecuzione.
+
+## Confini di sicurezza
+
+1. Tutte le richieste d'ordine devono passare dal Risk Gateway.
+2. Il bot non può inviare ordini se rischio, dati, stato del broker o journal non sono disponibili.
+3. Le credenziali Alpaca e il token API restano sul server.
+4. L'accesso remoto alla dashboard deve essere protetto da Cloudflare Access.
+5. LIVE resta disabilitato.
+6. L'invio ordini resta bloccato finché il gateway e il worker non sono completati e verificati.
 
 ## Runtime 24/7
-Condor e Hummingbot API richiedono un host persistente e, per l'API, Docker. Cloudflare Workers/Pages non possono ospitare il runtime Python/container. La dashboard può essere pubblicata separatamente, ma il motore deve restare su una macchina sempre attiva. La modalità locale di Condor non ha login e si lega a 127.0.0.1 per impostazione predefinita: non esporla in rete senza un livello di autenticazione e rete privata.
 
-## Criteri per dichiarare l'integrazione completata
-- Condor avviato con configurazione locale verificata.
-- Hummingbot API raggiungibile solo attraverso rete privata e autenticazione.
-- Connettore PAPER collegato e dati di mercato reali ricevuti.
-- Ogni percorso di invio ordini verificato e protetto dal Risk Gateway.
-- Ordine simulato end-to-end, stop, cancellazione e recovery testati.
-- Journal e audit log verificabili.
-- Nessun percorso LIVE abilitato.
+La dashboard è soltanto il pannello di controllo. Il processo di trading richiede un host Linux sempre acceso con Docker, riavvio automatico e monitoraggio. Una scheda browser o un Cloudflare Worker non sostituiscono un processo Python persistente.
+
+## Criteri per il rilascio PAPER
+
+- Dati e conto letti dal conto Alpaca PAPER effettivo.
+- Risk Gateway testato su tutti i percorsi d'ordine.
+- Limiti di perdita, esposizione, numero operazioni, stop-loss e kill switch verificati.
+- Journal e riconciliazione dopo riavvio verificati.
+- Ciclo PAPER completo testato, dall'ingresso all'uscita.
+- Nessun percorso LIVE disponibile.
