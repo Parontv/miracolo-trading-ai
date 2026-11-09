@@ -20,7 +20,7 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 | Dashboard semplificata mobile-first | Implementata |
 | Health check senza dati sensibili | Implementato |
 | Lettura privata account, asset, ordini e posizioni | Proxy Caddy server-side implementato; accesso remoto subordinato a Cloudflare Access |
-| Policy di rischio deterministica | Implementata e testata; non ancora collegata all'invio ordini |
+| Policy di rischio deterministica | Implementata e testata; nessun limite al numero di operazioni al giorno; non ancora collegata all'invio ordini |
 | Worker persistente 24/7 | Da implementare |
 | Journal persistente e riconciliazione ordini | Da implementare |
 | Invio ordini | **Bloccato** fino al completamento dei controlli |
