@@ -3,21 +3,30 @@ import assert from "node:assert/strict";
 import worker from "../cloudflare/worker.js";
 
 function mockDb() {
-  const state = { status: null, writes: 0 };
+  const state = { status: null, writes: 0, signals: 0 };
   return {
     state,
     prepare(sql) {
       const statement = {
-        bind() { return statement; },
+        bind(...values) {
+          statement.values = values;
+          return statement;
+        },
         async run() {
           state.writes += 1;
           if (sql.startsWith("INSERT INTO worker_status")) {
-            state.status = { status: "WAITING_CREDENTIALS", message: "Credenziali Alpaca PAPER mancanti", last_heartbeat: new Date().toISOString(), last_cycle: null };
+            state.status = {
+              status: statement.values[0],
+              message: statement.values[1],
+              last_heartbeat: statement.values[2],
+              last_cycle: statement.values[3],
+            };
           }
-          return { meta: { changes: 1 } };
+          if (sql.startsWith("INSERT OR IGNORE INTO signals")) state.signals += 1;
+          return { meta: { changes: 0 } };
         },
         async first() {
-          if (sql.includes("COUNT(*)")) return { total: 0 };
+          if (sql.includes("COUNT(*)")) return { total: state.signals };
           return state.status;
         },
         async all() { return { results: [] }; },
@@ -61,4 +70,33 @@ test("scheduled scanner records waiting-for-credentials state without Alpaca sec
   await scheduledPromise;
   assert.equal(DB.state.status.status, "WAITING_CREDENTIALS");
   assert.equal(DB.state.writes, 1);
+});
+
+test("scheduled scanner requests each crypto symbol separately and records a heartbeat", async () => {
+  const DB = mockDb();
+  const originalFetch = globalThis.fetch;
+  const requested = [];
+  const now = Date.now();
+  globalThis.fetch = async url => {
+    const parsed = new URL(url);
+    const symbol = parsed.searchParams.get("symbols");
+    requested.push(symbol);
+    const bars = Array.from({ length: 40 }, (_, index) => ({
+      t: new Date(now - (40 - index) * 60_000).toISOString(),
+      c: "100",
+    }));
+    return Response.json({ bars: { [symbol]: bars } });
+  };
+  try {
+    let scheduledPromise;
+    await worker.scheduled({}, { DB, APCA_API_KEY_ID: "paper-key", APCA_API_SECRET_KEY: "paper-secret" }, {
+      waitUntil(promise) { scheduledPromise = promise; },
+    });
+    await scheduledPromise;
+    assert.deepEqual(requested.sort(), ["BTC/USD", "ETH/USD", "QNT/USD"]);
+    assert.equal(DB.state.status.status, "MONITORING");
+    assert.equal(DB.state.signals, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
