@@ -63,6 +63,35 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(AlpacaError, "order_limit_exceeded"):
             self.client.submit_market_order("BTC/USD", "buy", notional=101)
 
+    def test_stop_limit_protection_uses_crypto_gtc_order(self):
+        calls = []
+        def opener(request, timeout):
+            calls.append(request)
+            path = request.full_url.removeprefix(PAPER_BASE_URL)
+            if path.startswith("/v2/assets/BTC"):
+                return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
+            if path == "/v2/positions":
+                return FakeResponse([{"symbol": "BTC/USD", "qty": "0.01"}])
+            if path == "/v2/orders":
+                return FakeResponse({"id": "stop-order", "type": "stop_limit"})
+            return FakeResponse({})
+        client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
+        result = client.submit_stop_limit_order(
+            "BTC/USD", "0.001", "95", "94.5", "miracolo-stop-001"
+        )
+        self.assertEqual(result["type"], "stop_limit")
+        body = json.loads(calls[-1].data)
+        self.assertEqual(body["side"], "sell")
+        self.assertEqual(body["time_in_force"], "gtc")
+        self.assertEqual(body["stop_price"], "95.0")
+        self.assertEqual(body["limit_price"], "94.5")
+
+    def test_stop_limit_rejects_limit_above_stop(self):
+        with self.assertRaisesRegex(AlpacaError, "invalid_stop_limit_relationship"):
+            self.client.submit_stop_limit_order(
+                "BTC/USD", "0.001", "94", "95", "miracolo-stop-002"
+            )
+
     def test_sell_requires_existing_long_position(self):
         with self.assertRaisesRegex(AlpacaError, "no_long_position_to_sell"):
             self.client.submit_market_order("BTC/USD", "sell", qty=0.001)
