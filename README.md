@@ -28,7 +28,7 @@ La scansione registra segnali, non ordini. Nessun ordine viene inviato da questa
 
 ## Pubblicazione
 
-Segui [la guida Cloudflare](docs/runtime-deployment.md). Il primo deploy richiede un D1 database, un API token Cloudflare e l'Account ID salvati nei GitHub repository secrets. Dopo il primo deploy, attiva Cloudflare Access sul Worker e aggiungi i secrets Alpaca PAPER e Access. Il workflow pubblica automaticamente gli aggiornamenti su `main`.
+Segui [la guida Cloudflare](docs/runtime-deployment.md). Il primo deploy richiede un D1 database e tre GitHub repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` e `D1_DATABASE_ID`. Dopo il primo deploy, attiva Cloudflare Access sul Worker e aggiungi i secrets Alpaca PAPER e Access. Il workflow pubblica automaticamente gli aggiornamenti su `main`.
 
 Il link finale avrà il formato `https://miracolo-trading-ai.<workers-subdomain>.workers.dev`. Il sottodominio è assegnato dal tuo account Cloudflare, quindi non viene inventato né dato per attivo prima della verifica.
 
@@ -42,4 +42,5 @@ Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Usa e
 python -m unittest discover -s tests -v
 node --check web/app.js
 node --input-type=module --check < cloudflare/worker.js
+node --test tests/cloudflare-worker.test.mjs
 ``
