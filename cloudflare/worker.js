@@ -43,7 +43,8 @@ async function verifyAccess(request, env) {
     const header = JSON.parse(new TextDecoder().decode(decodeBase64Url(head)));
     const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(body)));
     const issuer = `https://${env.ACCESS_TEAM_DOMAIN}.cloudflareaccess.com`;
-    if (claims.iss !== issuer || !claims.exp || claims.exp <= Date.now() / 1000) return false;
+    if (header.alg !== "RS256" || claims.iss !== issuer || !claims.exp || claims.exp <= Date.now() / 1000) return false;
+    if (claims.nbf && claims.nbf > Date.now() / 1000) return false;
     const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
     if (!audiences.includes(env.ACCESS_AUD)) return false;
     const certsResponse = await fetch(`${issuer}/cdn-cgi/access/certs`);
