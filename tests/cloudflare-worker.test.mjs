@@ -190,3 +190,34 @@ test("scanner catches a crossover on a bar missed between scheduled runs", async
     globalThis.fetch = originalFetch;
   }
 });
+
+test("scanner recovers from a cursor older than retained bar history", async () => {
+  const DB = mockDb();
+  const originalFetch = globalThis.fetch;
+  const minute = Math.floor(Date.now() / 60_000) * 60_000;
+  const symbols = ["BTC/USD", "ETH/USD", "QNT/USD"];
+  for (const symbol of symbols) {
+    DB.state.cursors.set(symbol, new Date(minute - 200 * 60_000).toISOString());
+  }
+  globalThis.fetch = async url => {
+    const symbol = new URL(url).searchParams.get("symbols");
+    const bars = Array.from({ length: 40 }, (_, index) => ({
+      t: new Date(minute - (40 - index) * 60_000).toISOString(),
+      c: index >= 38 ? "120" : "100",
+    }));
+    return Response.json({ bars: { [symbol]: bars } });
+  };
+  try {
+    let scheduledPromise;
+    await worker.scheduled({}, { DB, APCA_API_KEY_ID: "paper-key", APCA_API_SECRET_KEY: "paper-secret" }, {
+      waitUntil(promise) { scheduledPromise = promise; },
+    });
+    await scheduledPromise;
+    assert.deepEqual(DB.state.signals.map(values => values[1]).sort(), symbols);
+    assert.equal(DB.state.status.status, "DEGRADED");
+    assert.match(DB.state.status.message, /interruzione nello storico/);
+    assert.ok(symbols.every(symbol => DB.state.cursors.get(symbol) === new Date(minute - 60_000).toISOString()));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
