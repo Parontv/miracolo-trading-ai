@@ -18,7 +18,7 @@ curl --fail http://127.0.0.1:8090/api/health
 curl --fail http://127.0.0.1:8080/api/health
 ```
 
-The API binds to `127.0.0.1:8090`; Caddy binds to `127.0.0.1:8080`, serves `web/`, and proxies `/api/*` to the API. This compose file is intended for Linux Docker hosts with host networking. It is not a Cloudflare Worker deployment.
+The API binds to `127.0.0.1:8090`; Caddy binds to `127.0.0.1:8080`, serves `web/`, and proxies `/api/*` to the API. A separate `miracolo-worker` service scans Alpaca crypto 1-minute bars every 60 seconds, calculates EMA 9/21 crossover signals and writes them to a shared SQLite journal. API and worker share a named persistent volume. This compose file is intended for Linux Docker hosts with host networking. It is not a Cloudflare Worker deployment.
 
 ## Verify
 
@@ -28,7 +28,7 @@ docker compose -f compose.runtime.yml logs --tail=100 miracolo-web
 curl --fail http://127.0.0.1:8080/api/health
 ```
 
-The health endpoint reports service status, PAPER mode, whether Alpaca credentials are configured, and whether order execution is enabled. It does not return account information or secrets. Private Alpaca read endpoints require the server token. Order submission is deliberately locked until the Risk Gateway, persistent worker, journal, and end-to-end PAPER tests are complete.
+The health endpoint reports service status, PAPER mode, whether Alpaca credentials are configured, worker state, last scan time and signal count. `GET /api/bot/status` and `GET /api/bot/signals` expose the scanner status and recorded signals. It does not return account information or secrets. Private Alpaca read endpoints require the server token. Order submission is deliberately locked until the Risk Gateway, persistent worker, journal, and end-to-end PAPER tests are complete.
 
 ## 24/7 operation and safety
 
