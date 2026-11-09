@@ -20,18 +20,20 @@ jobs:
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           D1_ID: ${{ secrets.D1_DATABASE_ID }}
         run: |
-          for name in CF_TOKEN CF_ACCOUNT D1_ID; do
-            if [ -z "${!name}" ]; then
-              echo 'ready=false' >> "$GITHUB_OUTPUT"
-              echo "Waiting for GitHub secret: $name"
-              {
-                echo "## Miracolo deployment in attesa"
-                echo "Il deploy non è partito perché manca il secret: $name."
-                echo "Aggiungi i tre valori richiesti nella pagina GitHub Settings > Secrets and variables > Actions."
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-          done
+          missing_secret=""
+          if [ -z "$CF_TOKEN" ]; then missing_secret="CLOUDFLARE_API_TOKEN"; fi
+          if [ -z "$CF_ACCOUNT" ]; then missing_secret="CLOUDFLARE_ACCOUNT_ID"; fi
+          if [ -z "$D1_ID" ]; then missing_secret="D1_DATABASE_ID"; fi
+          if [ -n "$missing_secret" ]; then
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo "Waiting for GitHub secret: $missing_secret"
+            {
+              echo "## Miracolo deployment in attesa"
+              echo "Il deploy non è partito perché manca il secret: $missing_secret."
+              echo "Aggiungi i tre valori richiesti nella pagina GitHub Settings > Secrets and variables > Actions."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           if ! [[ "$D1_ID" =~ ^([a-fA-F0-9]{32}|[a-fA-F0-9-]{36})$ ]]; then
             echo 'Invalid D1_DATABASE_ID format.'
             exit 1
