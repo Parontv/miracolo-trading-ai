@@ -119,7 +119,7 @@ async function refreshStatus() {
     notice.hidden = true;
     if (!health.alpaca_configured) {
       document.querySelector("#account-state").textContent = "Credenziali mancanti";
-      detail.textContent = "Configura le chiavi Alpaca PAPER esclusivamente nel file .env.runtime sul server.";
+      detail.textContent = "Configura le chiavi Alpaca PAPER nei Worker Secrets di Cloudflare, mai nel browser.";
       clearAccount();
       return;
     }
