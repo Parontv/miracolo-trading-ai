@@ -21,7 +21,10 @@ class MigrationTests(unittest.TestCase):
         self.assertIn("worker_status", names)
         self.assertIn("signals", names)
         self.assertIn("scan_cursors", names)
+        self.assertIn("risk_reservations", names)
+        self.assertIn("order_journal", names)
         self.assertIn("idx_signals_created_at", names)
+        self.assertIn("idx_order_journal_state_updated", names)
 
     def test_signal_key_is_unique_and_side_is_constrained(self):
         values = ("BTC/USD:BUY:2026-11-09T10:00:00Z", "BTC/USD", "BUY",
@@ -55,6 +58,40 @@ class MigrationTests(unittest.TestCase):
             ("BTC/USD",),
         ).fetchone()
         self.assertEqual(row[0], "2026-11-09T10:01:00Z")
+
+    def test_order_journal_is_idempotent_and_state_is_constrained(self):
+        values = (
+            "client-1", "signal-1", "BTC/USD", "BUY", "NEW",
+            "2026-11-09T10:00:00Z", "2026-11-09T10:00:00Z",
+        )
+        insert = (
+            "INSERT INTO order_journal "
+            "(client_order_id, signal_key, symbol, side, state, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        self.db.execute(insert, values)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute(insert, values)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute(
+                "INSERT INTO order_journal "
+                "(client_order_id, signal_key, symbol, side, state, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                ("client-2", "signal-2", "BTC/USD", "BUY", "UNKNOWN",
+                 values[5], values[6]),
+            )
+
+    def test_risk_reservation_signal_key_is_unique(self):
+        values = ("client-1", "signal-1", "BTC/USD", "BUY", 50.0,
+                  "RESERVED", "2026-11-09T10:00:00Z", "2026-11-09T10:00:00Z")
+        insert = (
+            "INSERT INTO risk_reservations "
+            "(client_order_id, signal_key, symbol, side, notional_usd, status, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        self.db.execute(insert, values)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute(insert, ("client-2", *values[1:]))
 
 
 if __name__ == "__main__":
