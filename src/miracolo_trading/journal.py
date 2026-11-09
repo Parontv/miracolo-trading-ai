@@ -85,9 +85,15 @@ class Journal:
             return {"status": "NOT_STARTED", "last_heartbeat": None,
                     "last_cycle": None, "message": "Worker non ancora avviato",
                     "signals_recorded": count}
-        return {"status": row["status"], "last_heartbeat": row["last_heartbeat"],
-                "last_cycle": row["last_cycle"], "message": row["message"] or "",
-                "signals_recorded": count}
+        heartbeat = datetime.fromisoformat(row["last_heartbeat"])
+        age_seconds = max(0, int((datetime.now(timezone.utc) - heartbeat).total_seconds()))
+        current_status = row["status"] if age_seconds <= 180 else "STALE"
+        message = row["message"] or ""
+        if current_status == "STALE":
+            message = "Heartbeat del worker scaduto: controllare il servizio"
+        return {"status": current_status, "last_heartbeat": row["last_heartbeat"],
+                "last_cycle": row["last_cycle"], "age_seconds": age_seconds,
+                "message": message, "signals_recorded": count}
 
     def recent_signals(self, limit: int = 20):
         with self._connect() as db:
