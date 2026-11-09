@@ -27,7 +27,7 @@ The browser calls same-origin `/api/alpaca/*` endpoints without receiving the pr
 - `GET /api/alpaca/positions`: open positions.
 - `POST /api/alpaca/orders`: intentionally locked (423) until the centralized Risk Gateway, persistent worker, idempotency journal, and end-to-end PAPER tests are complete.
 
-The public `GET /api/health` endpoint reports only whether credentials are configured. It never returns account details or secrets.
+The public `GET /api/health` endpoint reports only whether credentials are configured and the scanner heartbeat. It never returns account details or secrets. The worker fetches historical 1-minute crypto bars independently for each configured pair, so the API's shared page limit cannot starve later symbols.
 
 ## Guardrails already present in the adapter
 
