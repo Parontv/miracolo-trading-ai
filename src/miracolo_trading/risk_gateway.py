@@ -120,8 +120,8 @@ class RiskGateway:
                 pending_new_symbols = {row["symbol"] for row in pending
                                        if row["symbol"] not in held_symbols}
                 if intent.side == "BUY" and intent.symbol not in held_symbols:
-                    projected_positions = snapshot.open_positions + len(pending_new_symbols)
-                    if projected_positions >= policy.max_open_positions:
+                    projected_positions = snapshot.open_positions + len(pending_new_symbols | {intent.symbol})
+                    if projected_positions > policy.max_open_positions:
                         db.rollback()
                         return False, "Maximum open positions reached."
                 recent = db.execute(
