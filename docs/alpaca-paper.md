@@ -1,4 +1,4 @@
-# Alpaca PAPER integration
+# Alpaca Paper integration
 
 The adapter is permanently pinned to `https://paper-api.alpaca.markets`. No LIVE host or mode is configurable.
 
@@ -13,11 +13,13 @@ ALPACA_API_TIMEOUT=8
 MIRACOLO_API_TOKEN=<long random private API token>
 ```
 
-Never put credentials in Git, GitHub Actions variables as a substitute for runtime configuration, frontend code, localStorage, URLs, or chat.
+Never put credentials or tokens in Git, frontend code, localStorage, URLs, or chat.
 
-## API
+## Private API proxy
 
-All `/api/alpaca/*` routes require a loopback request and `Authorization: Bearer <MIRACOLO_API_TOKEN>`.
+The browser calls same-origin `/api/alpaca/*` endpoints without receiving the private token. Caddy injects `MIRACOLO_API_TOKEN` into the upstream request on the server. The WSGI API accepts the request only from loopback and validates the bearer token.
+
+**Remote access must be protected by Cloudflare Access.** The Caddy listener binds to loopback only. Do not expose ports 8080 or 8090 directly, and do not publish the tunnel hostname without an Access policy. The token is available to the Caddy container only through the protected runtime environment.
 
 - `GET /api/alpaca/status`: Alpaca Paper account.
 - `GET /api/alpaca/assets`: allowlisted crypto assets and tradability.
