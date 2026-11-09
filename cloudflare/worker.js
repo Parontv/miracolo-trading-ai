@@ -95,10 +95,13 @@ async function scanMarkets(env) {
       const result = await alpacaFetch(env, DATA_BASE, `/v1beta3/crypto/us/bars?${query.toString()}`);
       const now = Date.now();
       const bars = (result.bars?.[symbol] || [])
-        .filter(bar => Number.isFinite(Number(bar.c)) && Number.isFinite(Date.parse(bar.t)))
+        .filter(bar => Number.isFinite(Number(bar.c)) && Number(bar.c) > 0 && Number.isFinite(Date.parse(bar.t)))
         .filter(bar => Date.parse(bar.t) + 60_000 <= now)
         .sort((a, b) => Date.parse(a.t) - Date.parse(b.t));
       if (bars.length < 30) return { symbol, inserted: 0, skipped: "history_insufficient" };
+      if (now - Date.parse(bars[bars.length - 1].t) > 180_000) {
+        return { symbol, inserted: 0, skipped: "stale_market_data" };
+      }
 
       const closes = bars.map(bar => Number(bar.c));
       const fast = ema(closes, 9);
@@ -118,10 +121,15 @@ async function scanMarkets(env) {
     }));
     const inserted = scans.reduce((sum, scan) => sum + scan.inserted, 0);
     const insufficient = scans.filter(scan => scan.skipped === "history_insufficient").map(scan => scan.symbol);
-    const message = insufficient.length
-      ? `Scansione parziale. Storico insufficiente: ${insufficient.join(", ")}. Nuovi segnali: ${inserted}`
+    const stale = scans.filter(scan => scan.skipped === "stale_market_data").map(scan => scan.symbol);
+    const issues = [
+      insufficient.length ? `storico insufficiente: ${insufficient.join(", ")}` : null,
+      stale.length ? `dati non aggiornati: ${stale.join(", ")}` : null,
+    ].filter(Boolean);
+    const message = issues.length
+      ? `Scansione parziale, ${issues.join("; ")}. Nuovi segnali: ${inserted}`
       : `Scansione completata. Nuovi segnali: ${inserted}`;
-    await updateStatus(env, insufficient.length ? "DEGRADED" : "MONITORING", message, new Date().toISOString());
+    await updateStatus(env, issues.length ? "DEGRADED" : "MONITORING", message, new Date().toISOString());
   } catch (error) {
     await updateStatus(env, "DEGRADED", String(error.message || error).slice(0, 180));
     throw error;
