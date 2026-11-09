@@ -7,7 +7,9 @@ class RiskPolicy:
     trading_mode: str = "PAPER"
     market_scope: str = "CRYPTO_ONLY"
     live_trading_allowed: bool = False
-    max_new_trades_per_day: int = 3
+    # None means there is no daily trade-count cap. Risk is controlled by
+    # exposure, order-rate, loss and per-order limits instead.
+    max_new_trades_per_day: int | None = None
     max_open_positions: int = 3
     max_orders_per_minute: int = 2
     max_daily_loss_usd: float = 15.0
@@ -35,7 +37,7 @@ def approve_intent(
     orders_last_minute: int,
     daily_pnl_usd: float,
 ) -> tuple[bool, str]:
-    """Approve only safe crypto PAPER intents; default behavior is conservative."""
+    """Approve safe crypto PAPER intents without a daily trade-count cap."""
     if policy.trading_mode != "PAPER":
         return False, "Only PAPER mode is enabled."
     if policy.market_scope != "CRYPTO_ONLY" or intent.asset_class.upper() != "CRYPTO":
