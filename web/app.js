@@ -124,6 +124,7 @@ async function refreshStatus() {
       return;
     }
     await loadBrokerData();
+    await refreshReconciliation();
     detail.textContent = "Dati letti direttamente dal conto Alpaca PAPER. Le chiavi e il token privato restano sul server.";
   } catch (error) {
     status.textContent = "Backend o broker non raggiungibile";
