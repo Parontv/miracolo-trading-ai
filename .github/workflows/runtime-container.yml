@@ -2,9 +2,9 @@ name: Runtime container validation
 
 on:
   pull_request:
-    branches: [integration/condor-foundation]
+    branches: [main]
   push:
-    branches: [stabilization/alpaca-paper-only]
+    branches: [main]
 
 jobs:
   runtime-container:
