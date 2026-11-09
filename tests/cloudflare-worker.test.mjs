@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import worker from "../cloudflare/worker.js";
 
 function mockDb() {
-  const state = { status: null, writes: 0, signals: 0 };
+  const state = { status: null, writes: 0, signals: [] };
   return {
     state,
     prepare(sql) {
@@ -22,11 +22,11 @@ function mockDb() {
               last_cycle: statement.values[3],
             };
           }
-          if (sql.startsWith("INSERT OR IGNORE INTO signals")) state.signals += 1;
-          return { meta: { changes: 0 } };
+          if (sql.startsWith("INSERT OR IGNORE INTO signals")) state.signals.push(statement.values);
+          return { meta: { changes: sql.startsWith("INSERT OR IGNORE INTO signals") ? 1 : 0 } };
         },
         async first() {
-          if (sql.includes("COUNT(*)")) return { total: state.signals };
+          if (sql.includes("COUNT(*)")) return { total: state.signals.length };
           return state.status;
         },
         async all() { return { results: [] }; },
@@ -95,7 +95,36 @@ test("scheduled scanner requests each crypto symbol separately and records a hea
     await scheduledPromise;
     assert.deepEqual(requested.sort(), ["BTC/USD", "ETH/USD", "QNT/USD"]);
     assert.equal(DB.state.status.status, "MONITORING");
-    assert.equal(DB.state.signals, 0);
+    assert.equal(DB.state.signals.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("scanner only creates EMA crossover signals from fully closed bars", async () => {
+  const DB = mockDb();
+  const originalFetch = globalThis.fetch;
+  const minute = Math.floor(Date.now() / 60_000) * 60_000;
+  globalThis.fetch = async url => {
+    const symbol = new URL(url).searchParams.get("symbols");
+    const bars = Array.from({ length: 40 }, (_, index) => ({
+      t: new Date(minute - (40 - index) * 60_000).toISOString(),
+      c: index === 39 ? "120" : "100",
+    }));
+    if (symbol === "BTC/USD") {
+      bars[39].t = new Date(minute).toISOString();
+    }
+    return Response.json({ bars: { [symbol]: bars } });
+  };
+  try {
+    let scheduledPromise;
+    await worker.scheduled({}, { DB, APCA_API_KEY_ID: "paper-key", APCA_API_SECRET_KEY: "paper-secret" }, {
+      waitUntil(promise) { scheduledPromise = promise; },
+    });
+    await scheduledPromise;
+    const signalledSymbols = DB.state.signals.map(values => values[1]).sort();
+    assert.deepEqual(signalledSymbols, ["ETH/USD", "QNT/USD"]);
+    assert.ok(DB.state.signals.every(values => values[2] === "BUY"));
   } finally {
     globalThis.fetch = originalFetch;
   }
