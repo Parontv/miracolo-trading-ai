@@ -40,4 +40,4 @@ A successful page render alone is not sufficient verification. Check API health 
 
 ## Execution safety
 
-The scanner only records EMA 9/21 signals. It does not submit orders. The Risk Gateway and the full order-fill-stop-loss-reconciliation lifecycle must be implemented and tested before enabling PAPER execution. LIVE remains disabled.
+The scanner queries each configured crypto pair separately, uses only closed one-minute bars, rejects stale market data, and stores a per-symbol cursor in D1. If a Cron run is delayed, it replays the unprocessed bars still available in the recent history window; if the cursor falls outside that window, it recovers from the available EMA history and marks that cycle degraded. The scanner only records EMA 9/21 signals. It does not submit orders. The Risk Gateway and the full order-fill-stop-loss-reconciliation lifecycle must be implemented and tested before enabling PAPER execution. LIVE remains disabled.
