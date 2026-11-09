@@ -90,7 +90,8 @@ class AlpacaPaperClient:
             {"symbol": item.get("symbol"), "tradable": bool(item.get("tradable")),
              "status": item.get("status"), "fractionable": bool(item.get("fractionable")),
              "min_order_size": item.get("min_order_size"),
-             "min_trade_increment": item.get("min_trade_increment")}
+             "min_trade_increment": item.get("min_trade_increment"),
+             "price_increment": item.get("price_increment")}
             for item in assets if item.get("symbol") in ALLOWED_SYMBOLS
         ]
 
@@ -99,6 +100,44 @@ class AlpacaPaperClient:
 
     def positions(self):
         return self._request("GET", "/v2/positions")
+
+    def get_order(self, order_id: str):
+        if not re.fullmatch(r"[A-Za-z0-9-]{8,64}", order_id):
+            raise AlpacaError("invalid_order_id", 400)
+        return self._request("GET", "/v2/orders/" + quote(order_id, safe=""))
+
+    def cancel_order(self, order_id: str):
+        if not re.fullmatch(r"[A-Za-z0-9-]{8,64}", order_id):
+            raise AlpacaError("invalid_order_id", 400)
+        return self._request("DELETE", "/v2/orders/" + quote(order_id, safe=""))
+
+    def submit_stop_limit_order(self, symbol: str, qty, stop_price, limit_price,
+                                client_order_id: str):
+        if symbol not in ALLOWED_SYMBOLS:
+            raise AlpacaError("symbol_not_allowed", 400)
+        if not CLIENT_ORDER_ID_RE.fullmatch(client_order_id):
+            raise AlpacaError("invalid_client_order_id", 400)
+        try:
+            quantity, stop, limit = float(qty), float(stop_price), float(limit_price)
+        except (TypeError, ValueError):
+            raise AlpacaError("invalid_stop_order_values", 400) from None
+        if quantity <= 0 or stop <= 0 or limit <= 0 or limit >= stop:
+            raise AlpacaError("invalid_stop_limit_relationship", 400)
+        asset = self._request("GET", "/v2/assets/" + quote(symbol, safe=""))
+        if (asset.get("class") != "crypto" or asset.get("tradable") is not True
+                or asset.get("status") != "active"):
+            raise AlpacaError("asset_not_tradable", 409)
+        positions = self.positions()
+        held = next((p for p in positions if p.get("symbol") == symbol), None)
+        if not held or quantity > float(held.get("qty", 0)):
+            raise AlpacaError("stop_quantity_exceeds_position", 409)
+        payload = {
+            "symbol": symbol, "side": "sell", "type": "stop_limit",
+            "time_in_force": "gtc", "qty": str(quantity),
+            "stop_price": str(stop), "limit_price": str(limit),
+            "client_order_id": client_order_id,
+        }
+        return self._request("POST", "/v2/orders", payload)
 
     def submit_market_order(self, symbol: str, side: str, notional=None, qty=None,
                             client_order_id: str | None = None):
