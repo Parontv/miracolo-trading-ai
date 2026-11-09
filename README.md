@@ -21,7 +21,7 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 | Health check senza dati sensibili | Implementato |
 | Lettura privata account, asset, ordini e posizioni | Proxy Caddy server-side implementato; accesso remoto subordinato a Cloudflare Access |
 | Policy di rischio deterministica | Implementata e testata; nessun limite al numero di operazioni al giorno; non ancora collegata all'invio ordini |
-| Worker persistente 24/7 | Da implementare |
+| Worker persistente 24/7 | Scanner crypto persistente con journal SQLite e stato visibile in dashboard; esecuzione ordini ancora disabilitata |
 | Journal persistente e riconciliazione ordini | Da implementare |
 | Invio ordini | **Bloccato** fino al completamento dei controlli |
 | LIVE | **Disabilitato** |
@@ -43,7 +43,7 @@ Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Consu
 
 ## Runtime 24/7
 
-Una pagina web e Cloudflare Workers non sono un processo Python persistente. Per il bot continuo serve un host Linux sempre acceso, per esempio un PC dedicato o un VPS, con Docker e riavvio automatico dei servizi.
+Il servizio `miracolo-worker` esegue una scansione ogni 60 secondi, recupera barre crypto a 1 minuto da Alpaca, calcola segnali EMA 9/21 e registra i segnali in SQLite. Non invia ordini. Una pagina web e Cloudflare Workers non sono un processo Python persistente. Per il bot continuo serve un host Linux sempre acceso, per esempio un PC dedicato o un VPS, con Docker e riavvio automatico dei servizi.
 
 ## Test
 
