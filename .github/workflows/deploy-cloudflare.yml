@@ -18,19 +18,20 @@ jobs:
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          D1_ID: ${{ secrets.D1_DATABASE_ID }}
         run: |
-          if grep -q 'CREATE_D1_DATABASE_AND_REPLACE_ID' wrangler.jsonc; then
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'Waiting for D1 database_id in wrangler.jsonc.'
-            exit 0
-          fi
-          for name in CF_TOKEN CF_ACCOUNT; do
+          for name in CF_TOKEN CF_ACCOUNT D1_ID; do
             if [ -z "${!name}" ]; then
               echo 'ready=false' >> "$GITHUB_OUTPUT"
               echo "Waiting for GitHub secret: $name"
               exit 0
             fi
           done
+          if ! [[ "$D1_ID" =~ ^[a-fA-F0-9-]{36}$ ]]; then
+            echo 'Invalid D1_DATABASE_ID format.'
+            exit 1
+          fi
+          sed -i "s/CREATE_D1_DATABASE_AND_REPLACE_ID/$D1_ID/" wrangler.jsonc
           echo 'ready=true' >> "$GITHUB_OUTPUT"
       - name: Apply D1 migrations
         if: steps.config.outputs.ready == 'true'
