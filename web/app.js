@@ -59,6 +59,42 @@ function row(container, title, detail, value, valueClass = "") {
   container.append(item);
 }
 
+async function refreshBotStatus() {
+  try {
+    const [statusData, signalData] = await Promise.all([
+      apiGet("/api/bot/status"),
+      apiGet("/api/bot/signals"),
+    ]);
+    const bot = statusData.bot || {};
+    const state = document.querySelector("#bot-state");
+    const last = document.querySelector("#bot-last-cycle");
+    if (state) state.textContent = ({
+      MONITORING: "Monitoraggio attivo",
+      WAITING_CREDENTIALS: "In attesa credenziali Alpaca",
+      DEGRADED: "Problema nella scansione",
+      NOT_STARTED: "Worker non avviato",
+      UNAVAILABLE: "Journal non disponibile",
+    })[bot.status] || bot.status || "Stato non disponibile";
+    if (last) last.textContent = bot.last_cycle ? new Date(bot.last_cycle).toLocaleString("it-IT") : "--";
+    const box = document.querySelector("#signal-list");
+    if (box) {
+      box.replaceChildren();
+      const signals = Array.isArray(signalData.signals) ? signalData.signals : [];
+      if (!signals.length) message(box, "Nessun segnale EMA registrato. Il bot continua a monitorare.");
+      signals.forEach((signal) => row(
+        box, `${signal.symbol} · ${signal.side}`,
+        `Barra ${new Date(signal.bar_time).toLocaleString("it-IT")} · EMA 9 ${number(signal.fast_ema, 4)} / EMA 21 ${number(signal.slow_ema, 4)}`,
+        money(signal.price)
+      ));
+      const count = document.querySelector("#signals-state");
+      if (count) count.textContent = `${bot.signals_recorded || 0} registrati`;
+    }
+  } catch (_error) {
+    const state = document.querySelector("#bot-state");
+    if (state) state.textContent = "Stato non disponibile";
+  }
+}
+
 async function refreshStatus() {
   const status = document.querySelector("#connection-status");
   const notice = document.querySelector("#connection-notice");
@@ -69,6 +105,7 @@ async function refreshStatus() {
   const sidebarDot = document.querySelector("#sidebar-dot");
   try {
     const health = await apiGet("/api/health");
+    await refreshBotStatus();
     if (health.ok !== true || health.mode !== "PAPER" || health.live_enabled !== false || health.broker !== "alpaca") {
       throw new Error("Stato di sicurezza del runtime non valido");
     }
@@ -157,8 +194,9 @@ async function loadBrokerData() {
 
 document.querySelector("#refresh-status")?.addEventListener("click", refreshStatus);
 refreshStatus();
+refreshBotStatus();
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refreshStatus();
+  if (!document.hidden) { refreshStatus(); refreshBotStatus(); }
 });
 setInterval(() => {
   if (!document.hidden) refreshStatus();
