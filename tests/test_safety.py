@@ -18,9 +18,10 @@ class SafetyPolicyTests(unittest.TestCase):
         self.assertEqual(approve_intent(self.intent, self.policy, **self.state),
                          (True, "Approved for PAPER routing only."))
 
-    def test_daily_trade_cap_is_three(self):
-        state = {**self.state, "trades_today": 3}
-        self.assertFalse(approve_intent(self.intent, self.policy, **state)[0])
+    def test_has_no_daily_trade_count_cap(self):
+        self.assertIsNone(self.policy.max_new_trades_per_day)
+        state = {**self.state, "trades_today": 500}
+        self.assertTrue(approve_intent(self.intent, self.policy, **state)[0])
 
     def test_blocks_non_crypto_assets(self):
         intent = TradeIntent("manual", "BUY", 50, True, asset_class="STOCK")
