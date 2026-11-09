@@ -2,37 +2,44 @@
 
 Miracolo is deployed as a Cloudflare Worker with static assets, a one-minute Cron Trigger and a D1 journal. It does not require a continuously running Linux server or an open browser tab.
 
-## Required one-time account setup
+## First deployment
 
-1. Install Node.js 22 and authenticate Wrangler with a Cloudflare API token that has Workers Scripts:Edit and D1:Edit permissions.
-2. Create the D1 database:
+1. Create a D1 database named `miracolo-trading-ai`:
    ```bash
    npx wrangler@4 d1 create miracolo-trading-ai
    ```
-3. Copy the returned database UUID into `database_id` in `wrangler.jsonc`.
-4. Create a Cloudflare Access self-hosted application for the Worker hostname. Restrict its Allow policy to your own email address. Copy the Access team domain and application audience tag.
-5. Add these GitHub repository secrets:
+2. Copy the returned database UUID into `database_id` in `wrangler.jsonc`.
+3. Create a Cloudflare API Token with Workers Scripts:Edit and D1:Edit permissions.
+4. Add these two GitHub repository secrets:
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
-   - `APCA_API_KEY_ID` (Alpaca PAPER only)
-   - `APCA_API_SECRET_KEY` (Alpaca PAPER only)
+5. Push to `main` or manually run the `Deploy Cloudflare` workflow. It applies the D1 migration and deploys the Worker plus `web/` assets.
+
+## Protect the application and connect Alpaca
+
+After the first deployment:
+
+1. In Cloudflare Workers & Pages, open the `miracolo-trading-ai` Worker and select **Access > Protect this Worker behind Access**.
+2. Require sign-in and create an Allow policy restricted to your own email address. Protect production traffic, not only previews.
+3. Copy the Access application's Audience (AUD) tag and your Zero Trust team domain.
+4. Add these GitHub repository secrets:
+   - `APCA_API_KEY_ID` (Alpaca PAPER key only)
+   - `APCA_API_SECRET_KEY` (Alpaca PAPER secret only)
    - `ACCESS_TEAM_DOMAIN` (team name only, without `.cloudflareaccess.com`)
-   - `ACCESS_AUD` (Cloudflare Access application audience tag)
+   - `ACCESS_AUD` (Access application's audience tag)
+5. Push a small commit to `main` or run `Deploy Cloudflare` again. The workflow uploads the secrets to the Worker and deploys the protected version.
 
-## Automatic deployment
-
-The `Deploy Cloudflare` GitHub Actions workflow runs on pushes to `main`. It applies D1 migrations, uploads secrets to the Worker, and deploys the Worker plus the `web/` static assets. Cloudflare assigns the final `workers.dev` hostname based on the account's workers.dev subdomain.
+Do not add LIVE credentials. Do not paste any secret into source code, issues, or chat.
 
 ## Verify after deployment
 
-- Open the production HTTPS hostname in a private browser session.
-- Cloudflare Access must ask for authentication before displaying private account data.
+- Open the production HTTPS hostname in a private browser session. Cloudflare Access must request authentication.
 - `GET /api/health` must return `ok: true`, `mode: PAPER`, `live_enabled: false`.
 - `GET /api/bot/status` must show `MONITORING` after the first successful scheduled scan, or `WAITING_CREDENTIALS` if Alpaca PAPER secrets are missing.
 - `GET /api/bot/signals` returns only signals persisted in D1.
-- `/api/alpaca/*` endpoints must reject requests without a valid Cloudflare Access JWT.
+- `/api/alpaca/*` endpoints reject requests without a valid Cloudflare Access JWT.
 
-A successful page render by itself is not sufficient verification. Check API health and the worker heartbeat as well.
+A successful page render alone is not sufficient verification. Check API health and the worker heartbeat as well.
 
 ## Execution safety
 
