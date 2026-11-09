@@ -1,4 +1,6 @@
 import tempfile
+import sqlite3
+from datetime import datetime, timedelta, timezone
 import unittest
 from pathlib import Path
 
@@ -33,6 +35,16 @@ class StrategyTests(unittest.TestCase):
 
 
 class JournalTests(unittest.TestCase):
+    def test_stale_worker_heartbeat_is_detected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = str(Path(folder) / "state.sqlite3")
+            journal = Journal(path)
+            journal.heartbeat("MONITORING", "ok", cycle=True)
+            stale = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+            with sqlite3.connect(path) as db:
+                db.execute("UPDATE worker_state SET last_heartbeat=?", (stale,))
+            self.assertEqual(journal.status()["status"], "STALE")
+
     def test_signal_deduplication_and_heartbeat(self):
         with tempfile.TemporaryDirectory() as folder:
             journal = Journal(str(Path(folder) / "state.sqlite3"))
