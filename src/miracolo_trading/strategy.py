@@ -1,7 +1,6 @@
 """Small deterministic EMA crossover signal detector. It never places orders."""
 from __future__ import annotations
 
-
 def ema(values: list[float], period: int) -> list[float]:
     if period < 1:
         raise ValueError("period must be positive")
@@ -13,9 +12,7 @@ def ema(values: list[float], period: int) -> list[float]:
         result.append(alpha * value + (1 - alpha) * result[-1])
     return result
 
-
-def crossover_signal(bars: list[dict], fast_period: int = 9,
-                     slow_period: int = 21) -> dict | None:
+def crossover_signal(bars: list[dict], fast_period: int = 9, slow_period: int = 21) -> dict | None:
     if fast_period >= slow_period or len(bars) < slow_period + 1:
         return None
     try:
@@ -25,13 +22,11 @@ def crossover_signal(bars: list[dict], fast_period: int = 9,
         return None
     if any(value <= 0 for value in closes):
         return None
-    fast = ema(closes, fast_period)
-    slow = ema(closes, slow_period)
-    # Align the fast EMA to the slow EMA's starting index.
-    offset = slow_period - fast_period
-    if len(fast) <= offset or len(slow) < 2:
+    fast, slow = ema(closes, fast_period), ema(closes, slow_period)
+    if len(fast) < 2 or len(slow) < 2:
         return None
-    fast_prev, fast_now = fast[offset - 1], fast[offset]
+    # Compare both EMAs at the same final two source bars.
+    fast_prev, fast_now = fast[-2], fast[-1]
     slow_prev, slow_now = slow[-2], slow[-1]
     side = None
     if fast_prev <= slow_prev and fast_now > slow_now:
