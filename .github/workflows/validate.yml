@@ -2,7 +2,7 @@ name: Validate Miracolo
 
 on:
   pull_request:
-    branches: [main]
+    branches: [integration/condor-foundation]
   push:
     branches: [stabilization/alpaca-paper-only]
 
