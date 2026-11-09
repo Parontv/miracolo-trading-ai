@@ -26,13 +26,13 @@ jobs:
               echo "Waiting for GitHub secret: $name"
               {
                 echo "## Miracolo deployment in attesa"
-                echo "Il deploy non è partito perché manca il secret `$name`."
+                echo "Il deploy non è partito perché manca il secret: $name."
                 echo "Aggiungi i tre valori richiesti nella pagina GitHub Settings > Secrets and variables > Actions."
               } >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
           done
-          if ! [[ "$D1_ID" =~ ^[a-fA-F0-9-]{36}$ ]]; then
+          if ! [[ "$D1_ID" =~ ^([a-fA-F0-9]{32}|[a-fA-F0-9-]{36})$ ]]; then
             echo 'Invalid D1_DATABASE_ID format.'
             exit 1
           fi
