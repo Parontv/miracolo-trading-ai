@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
+from contextlib import contextmanager
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -55,10 +56,14 @@ class RiskGateway:
             """)
             db.execute("CREATE INDEX IF NOT EXISTS idx_risk_reservations_created ON risk_reservations(created_at)")
 
+    @contextmanager
     def _connect(self):
         db = sqlite3.connect(self.db_path, timeout=10, isolation_level=None)
         db.row_factory = sqlite3.Row
-        return db
+        try:
+            yield db
+        finally:
+            db.close()
 
     def reserve(self, intent: OrderIntent, snapshot: RiskSnapshot,
                 now: float | None = None) -> tuple[bool, str]:
@@ -91,36 +96,34 @@ class RiskGateway:
         if snapshot.daily_pnl_usd <= -abs(policy.max_daily_loss_usd):
             return False, "Daily loss limit reached."
 
-        db = self._connect()
-        try:
-            db.execute("BEGIN IMMEDIATE")
-            duplicate = db.execute(
-                "SELECT status FROM risk_reservations WHERE client_order_id=?",
-                (intent.client_order_id,),
-            ).fetchone()
-            if duplicate:
+        with self._connect() as db:
+            try:
+                db.execute("BEGIN IMMEDIATE")
+                duplicate = db.execute(
+                    "SELECT status FROM risk_reservations WHERE client_order_id=?",
+                    (intent.client_order_id,),
+                ).fetchone()
+                if duplicate:
+                    db.rollback()
+                    return False, "Duplicate order intent."
+                recent = db.execute(
+                    "SELECT COUNT(*) AS n FROM risk_reservations WHERE created_at>=?",
+                    (now - 60,),
+                ).fetchone()["n"]
+                if recent >= policy.max_orders_per_minute:
+                    db.rollback()
+                    return False, "Order rate limit reached."
+                db.execute("""
+                    INSERT INTO risk_reservations
+                    (client_order_id,symbol,side,notional_usd,created_at,status)
+                    VALUES(?,?,?,?,?,'RESERVED')
+                """, (intent.client_order_id, intent.symbol, intent.side,
+                      intent.notional_usd, now))
+                db.commit()
+                return True, "Reserved for PAPER routing only."
+            except sqlite3.IntegrityError:
                 db.rollback()
                 return False, "Duplicate order intent."
-            recent = db.execute(
-                "SELECT COUNT(*) AS n FROM risk_reservations WHERE created_at>=?",
-                (now - 60,),
-            ).fetchone()["n"]
-            if recent + snapshot.open_orders >= policy.max_orders_per_minute:
-                db.rollback()
-                return False, "Order rate limit reached."
-            db.execute("""
-                INSERT INTO risk_reservations
-                (client_order_id,symbol,side,notional_usd,created_at,status)
-                VALUES(?,?,?,?,?,'RESERVED')
-            """, (intent.client_order_id, intent.symbol, intent.side,
-                  intent.notional_usd, now))
-            db.commit()
-            return True, "Reserved for PAPER routing only."
-        except sqlite3.IntegrityError:
-            db.rollback()
-            return False, "Duplicate order intent."
-        finally:
-            db.close()
 
     def mark_submitted(self, client_order_id: str):
         with self._connect() as db:
