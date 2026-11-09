@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import worker from "../cloudflare/worker.js";
 
 function mockDb() {
-  const state = { status: null, writes: 0, signals: [] };
+  const state = { status: null, writes: 0, signals: [], cursors: new Map() };
   return {
     state,
     prepare(sql) {
@@ -23,10 +23,15 @@ function mockDb() {
             };
           }
           if (sql.startsWith("INSERT OR IGNORE INTO signals")) state.signals.push(statement.values);
+          if (sql.startsWith("INSERT INTO scan_cursors")) state.cursors.set(statement.values[0], statement.values[1]);
           return { meta: { changes: sql.startsWith("INSERT OR IGNORE INTO signals") ? 1 : 0 } };
         },
         async first() {
           if (sql.includes("COUNT(*)")) return { total: state.signals.length };
+          if (sql.includes("SELECT last_bar_time")) {
+            const last_bar_time = state.cursors.get(statement.values[0]);
+            return last_bar_time ? { last_bar_time } : null;
+          }
           return state.status;
         },
         async all() { return { results: [] }; },
@@ -151,6 +156,36 @@ test("scanner degrades instead of trusting stale market data", async () => {
     assert.equal(DB.state.status.status, "DEGRADED");
     assert.match(DB.state.status.message, /dati non aggiornati/);
     assert.equal(DB.state.signals.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("scanner catches a crossover on a bar missed between scheduled runs", async () => {
+  const DB = mockDb();
+  const originalFetch = globalThis.fetch;
+  const minute = Math.floor(Date.now() / 60_000) * 60_000;
+  const symbols = ["BTC/USD", "ETH/USD", "QNT/USD"];
+  for (const symbol of symbols) {
+    DB.state.cursors.set(symbol, new Date(minute - 3 * 60_000).toISOString());
+  }
+  globalThis.fetch = async url => {
+    const symbol = new URL(url).searchParams.get("symbols");
+    const bars = Array.from({ length: 40 }, (_, index) => ({
+      t: new Date(minute - (40 - index) * 60_000).toISOString(),
+      c: index >= 38 ? "120" : "100",
+    }));
+    return Response.json({ bars: { [symbol]: bars } });
+  };
+  try {
+    let scheduledPromise;
+    await worker.scheduled({}, { DB, APCA_API_KEY_ID: "paper-key", APCA_API_SECRET_KEY: "paper-secret" }, {
+      waitUntil(promise) { scheduledPromise = promise; },
+    });
+    await scheduledPromise;
+    assert.deepEqual(DB.state.signals.map(values => values[1]).sort(), symbols);
+    assert.ok(DB.state.signals.every(values => values[2] === "BUY"));
+    assert.equal(DB.state.status.status, "MONITORING");
   } finally {
     globalThis.fetch = originalFetch;
   }
