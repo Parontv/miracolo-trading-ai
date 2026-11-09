@@ -1,0 +1,23 @@
+name: Runtime container validation
+
+on:
+  pull_request:
+    branches: [integration/condor-foundation]
+  push:
+    branches: [stabilization/alpaca-paper-only]
+
+jobs:
+  runtime-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose configuration
+        run: |
+          cp .env.runtime.example .env.runtime
+          docker compose -f compose.runtime.yml config --quiet
+      - name: Validate Caddy reverse proxy
+        run: docker run --rm --env-file .env.runtime -v "$PWD/Caddyfile.runtime:/etc/caddy/Caddyfile:ro" caddy:2.10-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Build runtime image
+        run: docker build -f Dockerfile.runtime -t miracolo-api:ci .
+      - name: Verify WSGI entrypoint
+        run: docker run --rm --network host --entrypoint python miracolo-api:ci -c "import wsgi; print('WSGI import OK')"

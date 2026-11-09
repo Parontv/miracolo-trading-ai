@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <meta name="description" content="Miracolo Trading AI, terminale crypto Alpaca PAPER.">
+  <title>Miracolo Trading AI</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navigazione principale">
+      <a class="brand" href="#dashboard"><span class="brand-mark">M</span><span>Miracolo <small>TRADING AI</small></span></a>
+      <nav id="navigation">
+        <a class="nav-link active" href="#dashboard" data-view="dashboard">Control Room</a>
+        <a class="nav-link" href="#activity" data-view="activity">Operazioni</a>
+        <a class="nav-link" href="#risk" data-view="risk">Gestione rischio</a>
+        <a class="nav-link" href="#settings" data-view="settings">Impostazioni</a>
+      </nav>
+      <div class="sidebar-bottom"><span class="dot offline" id="sidebar-dot"></span><span>Solo Alpaca PAPER</span></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><p class="eyebrow">MIRACOLO · CRYPTO TERMINAL</p><h1 id="page-title">Control Room</h1></div>
+        <div class="top-status"><span class="mode">PAPER</span><span class="status"><i class="dot offline" id="connection-dot"></i><span id="connection-status">Verifica runtime…</span></span></div>
+      </header>
+      <section class="notice" id="connection-notice" role="status">
+        <strong>Runtime non collegato</strong>
+        <span>La dashboard legge esclusivamente dati restituiti da Alpaca PAPER. Nessuna simulazione locale e nessun ordine LIVE.</span>
+      </section>
+      <section class="view active" id="view-dashboard">
+        <div class="section-heading"><div><h2>Stato del sistema</h2><p>Un solo broker, un solo conto e dati provenienti dal server Alpaca.</p></div><span class="tag">CRYPTO · PAPER</span></div>
+        <div class="metric-grid">
+          <article class="metric"><span>Equity conto</span><strong id="metric-equity">--</strong><small>Valore totale conto Alpaca</small></article>
+          <article class="metric"><span>Liquidità</span><strong id="metric-cash">--</strong><small>Cash disponibile</small></article>
+          <article class="metric"><span>Posizioni aperte</span><strong id="metric-positions">--</strong><small>Restituite da Alpaca</small></article>
+          <article class="metric"><span>Ordini aperti</span><strong id="metric-orders">--</strong><small>Restituiti da Alpaca</small></article>
+        </div>
+        <article class="panel">
+          <div class="panel-title"><div><h3>Connessione Alpaca PAPER</h3><p>Stato broker e conto</p></div><span class="pill muted" id="alpaca-status">Da verificare</span></div>
+          <div class="settings-list">
+            <div><span>Runtime</span><strong id="runtime-state">In verifica</strong></div>
+            <div><span>Broker</span><strong>Alpaca PAPER</strong></div>
+            <div><span>Stato conto</span><strong id="account-state">--</strong></div>
+            <div><span>Trading LIVE</span><strong>Disabilitato</strong></div>
+          </div>
+          <p class="browser-disclaimer" id="alpaca-detail">La dashboard non riceve mai le chiavi API o il token privato. Il proxy sul server inoltra le richieste autorizzate.</p>
+          <button class="refresh-button" id="refresh-status" type="button">Aggiorna dati</button>
+        </article>
+        <article class="panel">
+          <div class="panel-title"><div><h3>Posizioni aperte</h3><p>Quantità, prezzo medio e risultato non realizzato</p></div><span class="pill muted" id="positions-state">In attesa</span></div>
+          <div id="position-list" class="activity-list"><p class="muted">Dati Alpaca non ancora caricati.</p></div>
+        </article>
+        <article class="panel">
+          <div class="panel-title"><div><h3>Asset autorizzati</h3><p>Disponibilità verificata direttamente su Alpaca</p></div><span class="pill muted" id="assets-state">In attesa</span></div>
+          <div id="asset-list" class="activity-list"><p class="muted">Dati Alpaca non ancora caricati.</p></div>
+        </article>
+      </section>
+      <section class="view" id="view-activity">
+        <div class="section-heading"><div><h2>Operazioni</h2><p>Ordini aperti effettivamente presenti sul conto Alpaca PAPER.</p></div><span class="tag">DATI BROKER</span></div>
+        <article class="panel"><div class="panel-title"><div><h3>Ordini aperti</h3><p>Stato e dettagli restituiti da Alpaca</p></div><span class="pill muted" id="orders-state">In attesa</span></div><div id="order-list" class="activity-list"><p class="muted">Dati Alpaca non ancora caricati.</p></div></article>
+        <article class="panel"><div class="empty-row">L'invio ordini resta disabilitato finché il Risk Gateway, il worker persistente e il journal non sono completati e verificati.</div></article>
+      </section>
+      <section class="view" id="view-risk">
+        <div class="section-heading"><div><h2>Gestione rischio</h2><p>Le protezioni devono precedere l'attivazione del bot.</p></div></div>
+        <div class="settings-list">
+          <div><span>Broker consentito</span><strong>Alpaca PAPER</strong></div>
+          <div><span>Modalità LIVE</span><strong>Disabilitata</strong></div>
+          <div><span>Invio ordini</span><strong>Bloccato durante lo sviluppo</strong></div>
+          <div><span>Asset previsti</span><strong>BTC/USD · ETH/USD · QNT/USD, previa verifica broker</strong></div>
+          <div><span>Risk Gateway</span><strong>Da completare e testare</strong></div>
+          <div><span>Worker 24/7</span><strong>Da implementare su host persistente</strong></div>
+        </div>
+      </section>
+      <section class="view" id="view-settings">
+        <div class="section-heading"><div><h2>Impostazioni</h2><p>Configurazione riservata al runtime server.</p></div></div>
+        <div class="settings-list">
+          <div><span>Broker</span><strong>Alpaca esclusivamente</strong></div>
+          <div><span>Credenziali</span><strong>Solo server, mai nel browser o in Git</strong></div>
+          <div><span>Condor</span><strong>Riferimento per la struttura della UI</strong></div>
+          <div><span>Hummingbot / simulatore Binance</span><strong>Non utilizzati</strong></div>
+          <div><span>Protezione accesso</span><strong>Cloudflare Access obbligatorio per accesso remoto</strong></div>
+        </div>
+      </section>
+      <footer>Miracolo Trading AI <span>·</span> PAPER only <span>·</span> LIVE disabilitato</footer>
+    </main>
+  </div>
+  <script src="./app.js" defer></script>
+</body>
+</html>

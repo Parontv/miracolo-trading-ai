@@ -1,0 +1,15 @@
+:8080 {
+    bind 127.0.0.1
+    root * /srv/web
+    encode zstd gzip
+
+    @alpaca path /api/alpaca/*
+    reverse_proxy @alpaca 127.0.0.1:8090 {
+        header_up Authorization "Bearer {$MIRACOLO_API_TOKEN}"
+    }
+
+    @api path /api/*
+    reverse_proxy @api 127.0.0.1:8090
+
+    file_server
+}
