@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "miracolo-trading-ai"
 version = "0.1.0"
-description = "Safe integration layer for Hummingbot and TradingAgents"
+description = "Alpaca PAPER-only crypto trading runtime"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 
