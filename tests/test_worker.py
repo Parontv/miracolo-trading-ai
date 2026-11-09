@@ -16,6 +16,10 @@ class StrategyTests(unittest.TestCase):
         bars = [{"c": "100", "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(30)]
         self.assertIsNone(crossover_signal(bars))
 
+    def test_crossover_compares_same_bar_indices(self):
+        bars = [{"c": str(100 + i), "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(30)]
+        self.assertIsNone(crossover_signal(bars))
+
     def test_requires_sufficient_history(self):
         self.assertIsNone(crossover_signal([{"c": "100", "t": "now"}] * 10))
 
