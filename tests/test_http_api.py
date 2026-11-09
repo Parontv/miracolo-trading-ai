@@ -1,8 +1,11 @@
 import json
 import unittest
+import tempfile
+from pathlib import Path
 from io import BytesIO
 
 from miracolo_trading.http_api import create_app
+from miracolo_trading.journal import Journal
 
 
 class FakeAlpaca:
@@ -35,6 +38,21 @@ class HttpApiTests(unittest.TestCase):
         status, body = self.request("/api/health", remote="203.0.113.10")
         self.assertEqual(status, "403 Forbidden")
         self.assertEqual(body["error"], "loopback_access_only")
+
+    def test_bot_status_and_signals_are_visible(self):
+        with tempfile.TemporaryDirectory() as folder:
+            journal = Journal(str(Path(folder) / "state.sqlite3"))
+            journal.heartbeat("MONITORING", "scan ok", cycle=True)
+            app = create_app(alpaca=FakeAlpaca(), journal=journal)
+            captured = {}
+            def start(status, headers): captured["status"] = status
+            env = {"REQUEST_METHOD": "GET", "PATH_INFO": "/api/bot/status",
+                   "QUERY_STRING": "", "wsgi.input": BytesIO(),
+                   "CONTENT_LENGTH": "0", "REMOTE_ADDR": "127.0.0.1"}
+            body = json.loads(b"".join(app(env, start)))
+            self.assertEqual(captured["status"], "200 OK")
+            self.assertEqual(body["bot"]["status"], "MONITORING")
+            self.assertFalse(body["execution_enabled"])
 
     def test_unknown_route_is_not_found(self):
         status, body = self.request("/api/condor/servers")
