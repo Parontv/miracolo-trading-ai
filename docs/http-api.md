@@ -4,7 +4,9 @@ The WSGI service exposes a small same-origin API.
 
 ## Public status
 
-- `GET /api/health`: service status, fixed PAPER mode, LIVE flag, broker name, whether Alpaca credentials are configured, and execution-enabled flag. It never returns account details or secrets.
+- `GET /api/health`: service status, fixed PAPER mode, LIVE flag, broker name, Alpaca credential-presence flag, worker status, last scan time and signal count. It never returns account details or secrets.
+- `GET /api/bot/status`: persistent scanner heartbeat and state.
+- `GET /api/bot/signals`: latest deduplicated EMA crossover signals. Signals are not orders.
 
 ## Private Alpaca read routes
 
