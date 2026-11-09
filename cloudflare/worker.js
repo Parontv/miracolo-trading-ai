@@ -103,28 +103,47 @@ async function scanMarkets(env) {
         return { symbol, inserted: 0, skipped: "stale_market_data" };
       }
 
+      const cursor = await env.DB.prepare(
+        "SELECT last_bar_time FROM scan_cursors WHERE symbol = ?",
+      ).bind(symbol).first();
+      let startIndex = bars.length - 1;
+      if (cursor?.last_bar_time) {
+        startIndex = bars.findIndex(bar => Date.parse(bar.t) > Date.parse(cursor.last_bar_time));
+        if (startIndex === -1) return { symbol, inserted: 0 };
+        if (startIndex < 21) return { symbol, inserted: 0, skipped: "history_gap" };
+      }
+
       const closes = bars.map(bar => Number(bar.c));
       const fast = ema(closes, 9);
       const slow = ema(closes, 21);
-      const i = closes.length - 1;
-      const previous = i - 1;
-      const side = fast[previous] <= slow[previous] && fast[i] > slow[i] ? "BUY"
-        : fast[previous] >= slow[previous] && fast[i] < slow[i] ? "SELL" : null;
-      if (!side) return { symbol, inserted: 0, skipped: "no_crossover" };
+      let inserted = 0;
+      for (let i = startIndex; i < bars.length; i += 1) {
+        const previous = i - 1;
+        const side = fast[previous] <= slow[previous] && fast[i] > slow[i] ? "BUY"
+          : fast[previous] >= slow[previous] && fast[i] < slow[i] ? "SELL" : null;
+        if (!side) continue;
+        const barTime = bars[i].t;
+        const signalKey = `${symbol}:${side}:${barTime}`;
+        const write = await env.DB.prepare(
+          "INSERT OR IGNORE INTO signals (signal_key, symbol, side, bar_time, price, fast_ema, slow_ema, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        ).bind(signalKey, symbol, side, barTime, closes[i], fast[i], slow[i], new Date().toISOString()).run();
+        inserted += write.meta?.changes || 0;
+      }
 
-      const barTime = bars[i].t;
-      const signalKey = `${symbol}:${side}:${barTime}`;
-      const write = await env.DB.prepare(
-        "INSERT OR IGNORE INTO signals (signal_key, symbol, side, bar_time, price, fast_ema, slow_ema, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      ).bind(signalKey, symbol, side, barTime, closes[i], fast[i], slow[i], new Date().toISOString()).run();
-      return { symbol, inserted: write.meta?.changes || 0 };
+      await env.DB.prepare(
+        "INSERT INTO scan_cursors (symbol, last_bar_time, updated_at) VALUES (?, ?, ?) ON CONFLICT(symbol) DO UPDATE SET last_bar_time=excluded.last_bar_time, updated_at=excluded.updated_at",
+      ).bind(symbol, bars[bars.length - 1].t, new Date().toISOString()).run();
+      return { symbol, inserted };
     }));
+
     const inserted = scans.reduce((sum, scan) => sum + scan.inserted, 0);
     const insufficient = scans.filter(scan => scan.skipped === "history_insufficient").map(scan => scan.symbol);
     const stale = scans.filter(scan => scan.skipped === "stale_market_data").map(scan => scan.symbol);
+    const gaps = scans.filter(scan => scan.skipped === "history_gap").map(scan => scan.symbol);
     const issues = [
       insufficient.length ? `storico insufficiente: ${insufficient.join(", ")}` : null,
       stale.length ? `dati non aggiornati: ${stale.join(", ")}` : null,
+      gaps.length ? `interruzione nello storico: ${gaps.join(", ")}` : null,
     ].filter(Boolean);
     const message = issues.length
       ? `Scansione parziale, ${issues.join("; ")}. Nuovi segnali: ${inserted}`
