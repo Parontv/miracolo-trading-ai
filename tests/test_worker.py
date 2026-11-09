@@ -46,6 +46,21 @@ class JournalTests(unittest.TestCase):
 
 
 class WorkerTests(unittest.TestCase):
+    def test_worker_scans_and_persists_a_new_signal(self):
+        class FakeData:
+            configured = True
+            def latest_bars(self, symbols, limit):
+                rising = [{"c": "100", "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(29)]
+                rising.append({"c": "200", "t": "2026-01-01T00:29:00Z"})
+                flat = [{"c": "100", "t": f"2026-01-01T00:{i:02d}:00Z"} for i in range(30)]
+                return {"BTC/USD": rising, "ETH/USD": flat, "QNT/USD": flat}
+        with tempfile.TemporaryDirectory() as folder:
+            journal = Journal(str(Path(folder) / "state.sqlite3"))
+            run_worker(data_client=FakeData(), journal=journal,
+                       sleep=lambda _seconds: None, max_cycles=1)
+            self.assertEqual(journal.status()["status"], "MONITORING")
+            self.assertEqual(journal.status()["signals_recorded"], 1)
+
     def test_worker_waits_for_credentials_and_stops_after_one_cycle(self):
         class NoCredentials:
             configured = False
