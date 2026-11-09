@@ -20,25 +20,24 @@ jobs:
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           D1_ID: ${{ secrets.D1_DATABASE_ID }}
         run: |
-          missing_secret=""
-          if [ -z "$CF_TOKEN" ]; then
-            missing_secret="CLOUDFLARE_API_TOKEN"
-          elif [ -z "$CF_ACCOUNT" ]; then
-            missing_secret="CLOUDFLARE_ACCOUNT_ID"
-          elif [ -z "$D1_ID" ]; then
-            missing_secret="D1_DATABASE_ID"
-          fi
-          if [ -n "$missing_secret" ]; then
+          missing_secrets=()
+          if [ -z "$CF_TOKEN" ]; then missing_secrets+=("CLOUDFLARE_API_TOKEN"); fi
+          if [ -z "$CF_ACCOUNT" ]; then missing_secrets+=("CLOUDFLARE_ACCOUNT_ID"); fi
+          if [ -z "$D1_ID" ]; then missing_secrets+=("D1_DATABASE_ID"); fi
+          if [ "${#missing_secrets[@]}" -gt 0 ]; then
             echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo "Waiting for GitHub secret: $missing_secret"
             {
-              echo "## Miracolo deployment in attesa"
-              echo "Il deploy non è partito perché manca il secret: $missing_secret."
-              echo "Aggiungi i tre valori richiesti nella pagina GitHub Settings > Secrets and variables > Actions."
+              echo "## Deploy Cloudflare bloccato"
+              echo "Il rilascio non è stato eseguito. Mancano questi GitHub Actions secrets:"
+              for name in "${missing_secrets[@]}"; do
+                echo "- $name"
+              done
+              echo "Aggiungili in Settings > Secrets and variables > Actions e rilancia il workflow."
             } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            printf 'Missing GitHub Actions secret: %s\n' "${missing_secrets[@]}"
+            exit 1
           fi
-          if ! [[ "$D1_ID" =~ ^([a-fA-F0-9]{32}|[a-fA-F0-9-]{36})$ ]]; then
+          if ! [[ "$D1_ID" =~ ^([a-fA-F0-9]{32}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$ ]]; then
             echo 'Invalid D1_DATABASE_ID format.'
             exit 1
           fi
