@@ -18,20 +18,16 @@ jobs:
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          ALPACA_KEY: ${{ secrets.APCA_API_KEY_ID }}
-          ALPACA_SECRET: ${{ secrets.APCA_API_SECRET_KEY }}
-          ACCESS_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
-          ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
         run: |
           if grep -q 'CREATE_D1_DATABASE_AND_REPLACE_ID' wrangler.jsonc; then
             echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'Deployment is waiting for the D1 database ID in wrangler.jsonc.'
+            echo 'Waiting for D1 database_id in wrangler.jsonc.'
             exit 0
           fi
-          for name in CF_TOKEN CF_ACCOUNT ALPACA_KEY ALPACA_SECRET ACCESS_DOMAIN ACCESS_AUD; do
+          for name in CF_TOKEN CF_ACCOUNT; do
             if [ -z "${!name}" ]; then
               echo 'ready=false' >> "$GITHUB_OUTPUT"
-              echo "Deployment is waiting for GitHub secret: $name"
+              echo "Waiting for GitHub secret: $name"
               exit 0
             fi
           done
@@ -42,7 +38,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: Upload Alpaca and Access secrets
+      - name: Upload optional Alpaca and Access secrets
         if: steps.config.outputs.ready == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -54,7 +50,9 @@ jobs:
         run: |
           set -euo pipefail
           for name in APCA_API_KEY_ID APCA_API_SECRET_KEY ACCESS_TEAM_DOMAIN ACCESS_AUD; do
-            printf '%s' "${!name}" | npx wrangler@4 secret put "$name"
+            if [ -n "${!name}" ]; then
+              printf '%s' "${!name}" | npx wrangler@4 secret put "$name"
+            fi
           done
       - name: Deploy Worker and dashboard
         if: steps.config.outputs.ready == 'true'
