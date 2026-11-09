@@ -3,6 +3,7 @@
   "name": "miracolo-trading-ai",
   "main": "cloudflare/worker.js",
   "compatibility_date": "2026-11-09",
+  "workers_dev": true,
   "assets": {
     "directory": "./web",
     "binding": "ASSETS",
@@ -12,7 +13,8 @@
     {
       "binding": "DB",
       "database_name": "miracolo-trading-ai",
-      "database_id": "CREATE_D1_DATABASE_AND_REPLACE_ID"
+      "database_id": "CREATE_D1_DATABASE_AND_REPLACE_ID",
+      "migrations_dir": "migrations"
     }
   ],
   "triggers": {
