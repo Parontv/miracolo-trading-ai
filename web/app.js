@@ -74,6 +74,7 @@ async function refreshBotStatus() {
       DEGRADED: "Problema nella scansione",
       NOT_STARTED: "Worker non avviato",
       UNAVAILABLE: "Journal non disponibile",
+      STALE: "Worker senza heartbeat",
     })[bot.status] || bot.status || "Stato non disponibile";
     if (last) last.textContent = bot.last_cycle ? new Date(bot.last_cycle).toLocaleString("it-IT") : "--";
     const box = document.querySelector("#signal-list");
