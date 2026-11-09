@@ -1,3 +1,0 @@
-[submodule "upstream/condor"]
-	path = upstream/condor
-	url = https://github.com/hummingbot/condor.git
