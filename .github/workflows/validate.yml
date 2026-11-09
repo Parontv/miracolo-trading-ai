@@ -26,7 +26,7 @@ jobs:
           node-version: '22'
       - run: node --check web/app.js
       - run: node --input-type=module --check < cloudflare/worker.js
-      - run: node --test tests/cloudflare-worker.test.mjs tests/cloudflare-risk-gateway.test.mjs
+      - run: node --test tests/cloudflare-worker.test.mjs tests/cloudflare-risk-gateway.test.mjs tests/cloudflare-order-lifecycle.test.mjs
       - name: Validate Wrangler configuration
         run: node -e "JSON.parse(require('fs').readFileSync('wrangler.jsonc', 'utf8'))"
       - name: Verify dashboard does not contain a local trading simulator
