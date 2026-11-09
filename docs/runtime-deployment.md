@@ -35,6 +35,7 @@ Do not add LIVE credentials. Do not paste any secret into source code, issues, o
 - `GET /api/bot/status` must show `MONITORING` after the first successful scheduled scan, or `WAITING_CREDENTIALS` if Alpaca PAPER secrets are missing.
 - `GET /api/bot/signals` returns only signals persisted in D1.
 - `/api/alpaca/*` endpoints reject requests without a valid Cloudflare Access JWT.
+- `GET /api/alpaca/reconciliation` performs a read-only comparison of recent Alpaca orders and positions against the D1 order journal. It flags untracked positions/orders and filled entries without an active stop; it never modifies broker state.
 
 A successful page render alone is not sufficient verification. Check API health and the worker heartbeat as well.
 
