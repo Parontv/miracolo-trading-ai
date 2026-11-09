@@ -165,6 +165,72 @@ function freshBotStatus(row) {
   return age > 180000 ? { ...row, status: "STALE", message: "Heartbeat del worker scaduto" } : row;
 }
 
+const ACTIVE_ORDER_STATES = new Set([
+  "RISK_RESERVED",
+  "ENTRY_SUBMITTED",
+  "ENTRY_PARTIALLY_FILLED",
+  "ENTRY_FILLED",
+  "PROTECTION_SUBMITTED",
+  "PROTECTED",
+  "EXIT_SUBMITTED",
+  "EMERGENCY_EXIT_REQUIRED",
+  "EMERGENCY_EXIT_SUBMITTED",
+]);
+
+function normalizeSymbol(symbol) {
+  return String(symbol || "").replace("-", "/").toUpperCase();
+}
+
+export function buildReconciliation(journalRows, brokerOrders, brokerPositions) {
+  const orders = Array.isArray(brokerOrders) ? brokerOrders : [];
+  const positions = Array.isArray(brokerPositions) ? brokerPositions : [];
+  const journal = (Array.isArray(journalRows) ? journalRows : [])
+    .filter(row => ACTIVE_ORDER_STATES.has(row.state));
+  const issues = [];
+
+  for (const entry of journal) {
+    const entryOrder = entry.entry_order_id
+      ? orders.find(order => order.id === entry.entry_order_id)
+      : null;
+    const stopOrder = entry.stop_order_id
+      ? orders.find(order => order.id === entry.stop_order_id)
+      : null;
+    if (entry.entry_order_id && !entryOrder) {
+      issues.push({ type: "ENTRY_ORDER_NOT_FOUND", symbol: entry.symbol, client_order_id: entry.client_order_id });
+    }
+    const filled = Number(entry.filled_qty || 0);
+    const stopState = String(stopOrder?.status || entry.stop_status || "").toLowerCase();
+    const stopTerminal = ["canceled", "cancelled", "rejected", "expired", "filled"].includes(stopState);
+    if (filled > 0 && entry.state !== "CLOSED" && (!entry.stop_order_id || !stopOrder || stopTerminal)) {
+      issues.push({ type: "FILLED_POSITION_WITHOUT_ACTIVE_STOP", symbol: entry.symbol, client_order_id: entry.client_order_id });
+    }
+  }
+
+  for (const position of positions) {
+    const symbol = normalizeSymbol(position.symbol);
+    const tracked = journal.some(entry => normalizeSymbol(entry.symbol) === symbol);
+    if (!tracked) issues.push({ type: "UNTRACKED_BROKER_POSITION", symbol });
+  }
+
+  const trackedOrderIds = new Set(journal.flatMap(entry => [entry.entry_order_id, entry.stop_order_id, entry.exit_order_id]).filter(Boolean));
+  const untrackedOrders = orders
+    .filter(order => SYMBOLS.includes(normalizeSymbol(order.symbol)) && !trackedOrderIds.has(order.id))
+    .map(order => ({ id: order.id, symbol: normalizeSymbol(order.symbol), side: order.side, status: order.status }));
+  for (const order of untrackedOrders) {
+    issues.push({ type: "UNTRACKED_BROKER_ORDER", symbol: order.symbol, broker_order_id: order.id });
+  }
+
+  return {
+    status: issues.length ? "REVIEW_REQUIRED" : "IN_SYNC",
+    checked_at: new Date().toISOString(),
+    journal_active: journal.length,
+    broker_orders_checked: orders.length,
+    broker_positions_checked: positions.length,
+    issues,
+    untracked_orders: untrackedOrders,
+  };
+}
+
 async function routeApi(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -196,6 +262,19 @@ async function routeApi(request, env) {
     if (!await verifyAccess(request, env)) return response({ ok: false, error: "cloudflare_access_required" }, 401);
     if (!configured(env)) return response({ ok: false, error: "alpaca_credentials_missing" }, 503);
     try {
+      if (path === "/api/alpaca/reconciliation") {
+        const [orders, positions, journal] = await Promise.all([
+          alpacaFetch(env, PAPER_BASE, "/v2/orders?status=all&limit=500&direction=desc"),
+          alpacaFetch(env, PAPER_BASE, "/v2/positions"),
+          env.DB.prepare("SELECT client_order_id, signal_key, symbol, side, state, entry_order_id, entry_status, filled_qty, avg_fill_price, stop_order_id, stop_status, stop_qty, stop_price, stop_limit_price, exit_order_id, last_error FROM order_journal ORDER BY updated_at DESC LIMIT 200").all(),
+        ]);
+        return response({
+          ok: true,
+          mode: "PAPER",
+          execution_enabled: false,
+          reconciliation: buildReconciliation(journal.results || [], orders, positions.filter(position => SYMBOLS.includes(normalizeSymbol(position.symbol)))),
+        });
+      }
       if (path === "/api/alpaca/status") {
         const account = await alpacaFetch(env, PAPER_BASE, "/v2/account");
         return response({ ok: true, mode: "PAPER", live_enabled: false, account });
