@@ -4,16 +4,13 @@ Miracolo is deployed as a Cloudflare Worker with static assets, a one-minute Cro
 
 ## First deployment
 
-1. Create a D1 database named `miracolo-trading-ai`:
-   ```bash
-   npx wrangler@4 d1 create miracolo-trading-ai
-   ```
-2. Copy the returned database UUID into `database_id` in `wrangler.jsonc`.
-3. Create a Cloudflare API Token with Workers Scripts:Edit and D1:Edit permissions.
-4. Add these two GitHub repository secrets:
+1. In the Cloudflare dashboard, create a D1 database named `miracolo-trading-ai`. Copy its database UUID.
+2. Create a Cloudflare API Token with Workers Scripts:Edit and D1:Edit permissions. Copy your Cloudflare Account ID.
+3. In GitHub repository Settings > Secrets and variables > Actions, add:
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
-5. Push to `main` or manually run the `Deploy Cloudflare` workflow. It applies the D1 migration and deploys the Worker plus `web/` assets.
+   - `D1_DATABASE_ID` (the D1 UUID)
+4. Push to `main` or manually run the `Deploy Cloudflare` workflow. It substitutes the D1 ID at deploy time, applies the D1 migration and deploys the Worker plus `web/` assets. The ID is not written back into the repository.
 
 ## Protect the application and connect Alpaca
 
@@ -27,7 +24,7 @@ After the first deployment:
    - `APCA_API_SECRET_KEY` (Alpaca PAPER secret only)
    - `ACCESS_TEAM_DOMAIN` (team name only, without `.cloudflareaccess.com`)
    - `ACCESS_AUD` (Access application's audience tag)
-5. Push a small commit to `main` or run `Deploy Cloudflare` again. The workflow uploads the secrets to the Worker and deploys the protected version.
+5. Run the `Deploy Cloudflare` workflow again. The workflow uploads the secrets to the Worker and deploys the protected version.
 
 Do not add LIVE credentials. Do not paste any secret into source code, issues, or chat.
 
