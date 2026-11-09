@@ -52,7 +52,9 @@ class RiskGatewayTests(unittest.TestCase):
     def test_rate_limit_is_persistent(self):
         self.assertTrue(self.gateway.reserve(self.intent, self.snapshot, now=1000)[0])
         second = OrderIntent("miracolo-test-002", "ETH/USD", "BUY", 50, 100, 95)
-        self.assertEqual(self.gateway.reserve(second, self.snapshot, now=1020),
+        self.assertTrue(self.gateway.reserve(second, self.snapshot, now=1020)[0])
+        third = OrderIntent("miracolo-test-003", "QNT/USD", "BUY", 50, 100, 95)
+        self.assertEqual(self.gateway.reserve(third, self.snapshot, now=1025),
                          (False, "Order rate limit reached."))
 
     def test_mark_submitted_only_once(self):
