@@ -1,43 +1,64 @@
-# Miracolo Trading AI
+# Condor-based Crypto Trading Platform
 
-Piattaforma indipendente **crypto-only**, progettata per operatività continua 24/7 e costruita integrando Condor, Hummingbot e TradingAgents.
+**Condor upstream is the application.** This repository pins the official Hummingbot Condor project as a Git submodule and keeps only the integration/configuration work around it. The complete upstream Condor dashboard, backend, agents, routines, portfolio views and bot management are reused; they are not reimplemented here.
 
-> Stato: integrazione architetturale in corso. Non è ancora collegata a un exchange e non invia ordini reali.
+## Source of truth
 
-## Obiettivo operativo
-- Solo mercati crypto, 24 ore su 24 e 7 giorni su 7.
-- Condor è la base applicativa per dashboard, agenti e gestione operativa.
-- Hummingbot è il motore di esecuzione e gestione ordini.
-- TradingAgents è il livello di ricerca e proposta, non un esecutore.
-- Nessun limite arbitrario di 3 operazioni al giorno: la frequenza dipende dalla strategia, dalla liquidità e dai costi.
-- Protezioni su posizioni simultanee, frequenza ordini, perdita giornaliera e stop loss.
-- Modalità iniziale esclusivamente PAPER.
-- Nessuna API key o credenziale nel repository.
-
-## Componenti upstream
 - Condor: https://github.com/hummingbot/condor
-- Hummingbot: https://github.com/hummingbot/hummingbot
+- Pinned source: `upstream/condor` at commit `a817f6633a90afe41523377bfd360c0b9316d423`
 - Hummingbot API: https://github.com/hummingbot/hummingbot-api
-- TradingAgents: https://github.com/TauricResearch/TradingAgents
+- Hummingbot engine: https://github.com/hummingbot/hummingbot
+- TradingAgents (optional research only): https://github.com/TauricResearch/TradingAgents
 
-Le componenti upstream mantengono le rispettive licenze. Conservare licenze e attribuzioni originali.
+Do not replace Condor's dashboard or backend with a parallel implementation. Keep upstream code and its MIT license/attributions intact. Any local changes must be minimal, documented, tested and kept outside upstream files unless an upstream patch is genuinely required.
 
-## Architettura
-1. Condor fornisce dashboard, agenti, routine e gestione operativa.
-2. Hummingbot gestisce connettori, strategie, ordini e posizioni crypto.
-3. TradingAgents produce analisi a intervalli controllati.
-4. Il Risk Gateway verifica modalità, esposizione, limiti e idempotenza.
-5. Solo il Risk Gateway può autorizzare operazioni verso Hummingbot.
-6. Il journal registra decisioni, motivazioni, ordini e risultati.
+## Get the complete Condor application
 
-## Sicurezza
-- PAPER è l'unica modalità consentita durante sviluppo e collaudo.
-- LIVE resta disabilitato.
-- Nessun agente AI può inviare ordini direttamente.
-- Hummingbot API non deve essere esposta su Internet pubblico.
-- Per i vincoli di rete, runtime e setup leggere [docs/condor-integration.md](docs/condor-integration.md).
+Clone with submodules:
 
-## Test
-Eseguire: `python -m unittest discover -s tests -v`
+```bash
+git clone --recurse-submodules https://github.com/Parontv/miracolo-trading-ai.git
+cd miracolo-trading-ai
+git submodule status
+cd upstream/condor
+```
 
-Nessun profitto è garantito. I risultati PAPER non garantiscono risultati futuri.
+If the submodule was not downloaded:
+
+```bash
+git submodule update --init --recursive
+```
+
+Use Condor's own setup and runtime commands, not a second dashboard:
+
+```bash
+make setup
+make install
+make doctor
+make run
+```
+
+The official Condor README and Makefile in `upstream/condor` are authoritative for supported installation, configuration, dashboard access, troubleshooting and upgrades. Condor supports local mode and Telegram mode; select the supported mode that fits the deployment. Local mode is loopback-only and has no login. Do not expose it to a network without an authenticated private access layer.
+
+## Integration scope
+
+- **Condor:** complete application, dashboard, orchestration, agents, routines and operational interface.
+- **Hummingbot API:** official API for bot, executor, account, order and position operations.
+- **Hummingbot:** official exchange connectors, strategies and execution engine.
+- **TradingAgents:** optional analysis/research only; no direct exchange credentials or order execution authority.
+
+Initial operation remains **PAPER only**. Do not enable LIVE credentials or live order routes during development. Do not expose Hummingbot API, MQTT or database services to the public Internet. Follow upstream security guidance and use private authenticated networking.
+
+## Compatibility and validation
+
+Condor requires Python `>=3.12,<3.14`; its frontend build uses Node.js 22. The validation workflow checks the pinned upstream source, Python tests, Condor backend imports and the Condor frontend build.
+
+Before any deployment, verify the workflow is green and complete an end-to-end PAPER test covering connection, market data, portfolio, order placement, cancellation, bot stop/restart and recovery. A passing build alone does not prove exchange connectivity or 24/7 runtime.
+
+## Repository policy
+
+- No duplicate dashboard, API client or trading engine where Condor/Hummingbot already provide the capability.
+- No invented risk thresholds presented as upstream defaults.
+- Keep custom code only for a verified integration gap.
+- Never commit API keys, passwords or exchange secrets.
+- Do not claim 24/7 operation until a persistent runtime is actually deployed and monitored.
