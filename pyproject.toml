@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "miracolo-trading-ai"
 version = "0.1.0"
 description = "Safe integration layer for Hummingbot and TradingAgents"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.14"
 license = { text = "MIT" }
 
 [tool.setuptools.packages.find]
