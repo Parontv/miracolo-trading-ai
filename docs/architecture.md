@@ -23,7 +23,7 @@ Condor documenta flussi di trading e agenti autonomi che possono operare tramite
 8. Disabilitare le funzioni DEX/Gateway nella prima fase: il perimetro è solo crypto CEX spot/perpetual, con modalità PAPER.
 
 ## Interfaccia
-La dashboard web di Condor è la base da valutare e integrare. La shell statica Miracolo in `web/` resta solo un prototipo e non deve diventare una seconda interfaccia concorrente. L'interfaccia finale sarà in italiano e ottimizzata per Android.
+La dashboard web di Condor è la base da valutare e integrare. La precedente shell statica prototipale in `web/` è stata rimossa: la dashboard ufficiale Condor è l'unica interfaccia applicativa. L'interfaccia finale sarà in italiano e ottimizzata per Android.
 
 ## Runtime 24/7
 Condor e Hummingbot API richiedono un host persistente e, per l'API, Docker. Cloudflare Workers/Pages non possono ospitare il runtime Python/container. La dashboard può essere pubblicata separatamente, ma il motore deve restare su una macchina sempre attiva. La modalità locale di Condor non ha login e si lega a 127.0.0.1 per impostazione predefinita: non esporla in rete senza un livello di autenticazione e rete privata.
