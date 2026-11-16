@@ -18,7 +18,7 @@ The workflow requires a Cloudflare API token with Workers Scripts:Edit and D1:Ed
 
 1. Install and run the official Condor application on a persistent Linux/WSL2 host, together with Hummingbot API and its Docker services as required by the upstream setup.
 2. Keep Condor bound to localhost. Expose its dashboard through Cloudflare Tunnel and protect it with Cloudflare Access. Do not publish port 8088 or Hummingbot API port 8000 directly.
-3. Set the Worker variable `CONDOR_WEB_URL` in Cloudflare Worker settings to the resulting HTTPS Condor dashboard URL. The MiracoIо sidebar entry `Condor` redirects to that original dashboard in a new tab. This variable is not uploaded by the current GitHub workflow, so configure it directly in the Worker dashboard.
+3. Set the Worker variable `CONDOR_WEB_URL` in Cloudflare Worker settings to the resulting HTTPS Condor dashboard URL. The Miracolo sidebar entry `Condor` redirects to that original dashboard in a new tab. This variable is not uploaded by the current GitHub workflow, so configure it directly in the Worker dashboard.
 4. Verify the URL from a browser already authenticated through Access. A successful redirect alone does not prove that Condor or its Hummingbot API is healthy.
 
 The Cloudflare Worker and D1 database remain the Miracolo web/API layer. They do not run Condor or Hummingbot containers.
