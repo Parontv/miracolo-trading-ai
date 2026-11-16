@@ -5,23 +5,36 @@ Questa procedura pubblica **solo la dashboard Condor** nel tailnet Tailscale. No
 ## Installazione runtime
 
 1. In Windows installa WSL2 con Ubuntu e Docker Desktop con integrazione WSL attiva.
-2. Apri Ubuntu (WSL2), crea una cartella dedicata e avvia l'installer ufficiale Condor da lì:
+2. Apri Ubuntu (WSL2) e crea la cartella runtime:
 
 ```bash
 mkdir -p ~/miracolo-runtime && cd ~/miracolo-runtime
-curl -fsSL https://raw.githubusercontent.com/hummingbot/deploy/main/setup.sh | bash
 ```
 
-3. Nel wizard scegli **Local** se vuoi usare la dashboard browser senza Telegram. Seleziona anche Hummingbot API nello stesso host quando richiesto. Non inserire chiavi LIVE e non configurare exchange per ora.
-4. Terminata l'installazione:
+3. Installa prima Hummingbot API come servizio locale, usando l'installer ufficiale:
 
 ```bash
-cd ~/miracolo-runtime/condor
+curl -fsSL https://raw.githubusercontent.com/hummingbot/deploy/main/setup.sh | bash -s -- --hummingbot-api
+```
+
+4. Clona Condor e fissa **lo stesso commit già verificato nel repository Miracolo**:
+
+```bash
+git clone https://github.com/hummingbot/condor.git condor
+cd condor
+git checkout 2442752df1259651002034055a32d974da29a361
+make install
+```
+
+5. Nel wizard Condor scegli **Local** per usare la dashboard browser senza Telegram. L'API è sullo stesso host e viene raggiunta su `localhost:8000`. Non inserire chiavi LIVE e non configurare exchange per ora.
+6. Avvia e verifica:
+
+```bash
 make doctor
 make run
 ```
 
-5. Verifica in Ubuntu che `http://127.0.0.1:8088` risponda.
+7. Verifica in Ubuntu che `http://127.0.0.1:8088` risponda.
 
 ## Accesso dal telefono
 
