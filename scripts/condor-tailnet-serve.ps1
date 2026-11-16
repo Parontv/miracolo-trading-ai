@@ -34,7 +34,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 $serveText = $serveStatus -join [Environment]::NewLine
 Write-Host $serveText
-$match = [regex]::Match($serveText, "https://[A-Za-z0-9.-]+\\.ts\\.net")
+$match = [regex]::Match($serveText, "https://[A-Za-z0-9.-]+\.ts\.net")
 if (-not $match.Success) {
     throw "URL HTTPS Tailscale non individuato nell'output. Controlla 'tailscale serve status'."
 }
