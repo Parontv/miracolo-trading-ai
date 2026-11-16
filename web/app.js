@@ -21,6 +21,10 @@ if (initial) navigate(initial);
 
 async function apiGet(path) {
   const response = await fetch(path, { headers: { Accept: "application/json" }, cache: "no-store" });
+  const contentType = response.headers.get("content-type") || "";
+  if (response.redirected && !contentType.includes("application/json")) {
+    throw new Error("cloudflare_access_login_required");
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
@@ -133,7 +137,7 @@ async function refreshStatus() {
     await refreshReconciliation();
     detail.textContent = "Dati letti direttamente dal conto Alpaca PAPER. Le chiavi e il token privato restano sul server.";
   } catch (error) {
-    const accessError = error.message === "cloudflare_access_required" || error.message === "cloudflare_access_not_configured";
+    const accessError = error.message === "cloudflare_access_required" || error.message === "cloudflare_access_not_configured" || error.message === "cloudflare_access_login_required";
     status.textContent = accessError ? "Cloudflare Access da configurare" : "Backend o broker non raggiungibile";
     dot.classList.add("offline");
     sidebarDot.classList.add("offline");
@@ -143,7 +147,9 @@ async function refreshStatus() {
     notice.hidden = false;
     notice.querySelector("strong").textContent = accessError ? "Accesso sicuro non configurato" : "Connessione non disponibile";
     notice.querySelector("span").textContent = accessError
-      ? "Il conto Alpaca è protetto. Configura Cloudflare Access per autorizzare la lettura dei dati."
+      ? (error.message === "cloudflare_access_login_required"
+        ? "Completa il login Cloudflare Access nel browser, poi ricarica la dashboard."
+        : "Il conto Alpaca è protetto. Configura Cloudflare Access per autorizzare la lettura dei dati.")
       : error.message;
     detail.textContent = "Le chiavi restano sul server; non inserirle mai nel browser.";
   }
