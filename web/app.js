@@ -260,3 +260,12 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   if (!document.hidden) refreshStatus();
 }, 30000);
+
+
+// Install the existing web app on Android and desktop as a PWA.
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js", { scope: "/" })
+      .catch((error) => console.warn("Miracolo offline shell unavailable:", error));
+  }, { once: true });
+}
