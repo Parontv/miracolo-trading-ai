@@ -2,15 +2,17 @@
 
 This deployment hosts the Miracolo web dashboard, edge API, scheduled market-data scanner and D1 journal. The browser does not need to remain open. This Cloudflare deployment is **not** a Condor/Hummingbot runtime: those upstream services require a persistent host and Hummingbot API/Docker. Until that runtime is deliberately provided, the Cloudflare app is limited to dashboard, market monitoring and read-only Alpaca PAPER checks. Do not describe the complete Condor/Hummingbot trading system as 24/7 operational on Workers alone.
 
-## First deployment
+## Deploy using the existing D1 database
 
-1. In the Cloudflare dashboard, create a D1 database named `miracolo-trading-ai`. Copy its database UUID.
-2. Create a Cloudflare API Token with Workers Scripts:Edit and D1:Edit permissions. Copy your Cloudflare Account ID.
-3. In GitHub repository Settings > Secrets and variables > Actions, add:
+1. **Do not create another D1 database.** In Cloudflare, locate the existing `miracolo-trading-ai` database and verify its UUID and account.
+2. In GitHub repository Settings > Secrets and variables > Actions, verify these existing secrets:
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
-   - `D1_DATABASE_ID` (the D1 UUID)
-4. Push to `main` or manually run the `Deploy Cloudflare` workflow. It substitutes the D1 ID at deploy time, applies the D1 migration and deploys the Worker plus `web/` assets. The ID is not written back into the repository.
+   - `D1_DATABASE_ID` (must be the UUID of the existing database)
+3. The deploy workflow substitutes that UUID into the temporary Wrangler config, applies the repository's pending D1 migrations, then deploys the Worker and `web/` assets. It does not create a new database or write the UUID into Git.
+4. Preserve the existing D1 binding name `DB`. Do not delete, replace, or recreate the database to resolve a configuration error. If the secret does not match the existing database, stop and correct the secret before deploying.
+
+The workflow requires a Cloudflare API token with Workers Scripts:Edit and D1:Edit permissions. Never paste the database UUID or any credentials into source files or chat.
 
 ## Connect the original Condor dashboard
 
