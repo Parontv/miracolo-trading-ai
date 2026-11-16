@@ -51,7 +51,22 @@ test("health endpoint reports PAPER-only mode without leaking credentials", asyn
   assert.equal(body.live_enabled, false);
   assert.equal(body.execution_enabled, false);
   assert.equal(body.alpaca_configured, false);
+  assert.equal(body.access_configured, false);
   assert.equal("APCA_API_SECRET_KEY" in body, false);
+});
+
+test("health endpoint reports Cloudflare Access readiness without exposing configuration values", async () => {
+  const DB = mockDb();
+  const result = await worker.fetch(new Request("https://example.workers.dev/api/health"), {
+    DB,
+    ACCESS_TEAM_DOMAIN: "example-team",
+    ACCESS_AUD: "example-audience",
+  });
+  const body = await result.json();
+  assert.equal(result.status, 200);
+  assert.equal(body.access_configured, true);
+  assert.equal(body.ACCESS_TEAM_DOMAIN, undefined);
+  assert.equal(body.ACCESS_AUD, undefined);
 });
 
 test("private Alpaca endpoints fail closed without Cloudflare Access", async () => {
