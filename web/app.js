@@ -110,10 +110,20 @@ async function refreshStatus() {
     if (health.ok !== true || health.mode !== "PAPER" || health.live_enabled !== false || health.broker !== "alpaca") {
       throw new Error("Stato di sicurezza del runtime non valido");
     }
-    status.textContent = "Runtime attivo · Alpaca PAPER";
-    dot.classList.remove("offline");
-    sidebarDot.classList.remove("offline");
-    runtime.textContent = "Attivo";
+    const workerStatus = health.bot?.status || "NOT_STARTED";
+    const workerLabels = {
+      MONITORING: "Scanner attivo",
+      WAITING_CREDENTIALS: "In attesa credenziali Alpaca",
+      DEGRADED: "Scanner in modalità degradata",
+      NOT_STARTED: "Scanner non ancora avviato",
+      STALE: "Heartbeat scaduto",
+      UNAVAILABLE: "Journal non disponibile",
+    };
+    const workerReady = workerStatus === "MONITORING";
+    status.textContent = workerLabels[workerStatus] || "Stato worker da verificare";
+    dot.classList.toggle("offline", !workerReady);
+    sidebarDot.classList.toggle("offline", !workerReady);
+    runtime.textContent = workerLabels[workerStatus] || workerStatus;
     alpaca.textContent = health.alpaca_configured ? "Broker configurato" : "Credenziali mancanti";
     alpaca.className = health.alpaca_configured ? "pill online" : "pill muted";
     notice.hidden = true;
