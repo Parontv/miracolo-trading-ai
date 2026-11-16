@@ -12,6 +12,15 @@ This deployment hosts the Miracolo web dashboard, edge API, scheduled market-dat
    - `D1_DATABASE_ID` (the D1 UUID)
 4. Push to `main` or manually run the `Deploy Cloudflare` workflow. It substitutes the D1 ID at deploy time, applies the D1 migration and deploys the Worker plus `web/` assets. The ID is not written back into the repository.
 
+## Connect the original Condor dashboard
+
+1. Install and run the official Condor application on a persistent Linux/WSL2 host, together with Hummingbot API and its Docker services as required by the upstream setup.
+2. Keep Condor bound to localhost. Expose its dashboard through Cloudflare Tunnel and protect it with Cloudflare Access. Do not publish port 8088 or Hummingbot API port 8000 directly.
+3. Set the Worker variable `CONDOR_WEB_URL` to the resulting HTTPS Condor dashboard URL. The Miracolo sidebar entry `Condor` redirects to that original dashboard in a new tab.
+4. Verify the URL from a browser already authenticated through Access. A successful redirect alone does not prove that Condor or its Hummingbot API is healthy.
+
+The Cloudflare Worker and D1 database remain the Miracolo web/API layer. They do not run Condor or Hummingbot containers.
+
 ## Protect the application and connect Alpaca
 
 After the first deployment:
