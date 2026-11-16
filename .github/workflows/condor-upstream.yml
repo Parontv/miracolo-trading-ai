@@ -37,3 +37,22 @@ jobs:
       - name: Run original Condor frontend tests
         working-directory: upstream/condor/frontend
         run: npm test -- --reporter=dot
+
+  windows-access-script:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PowerShell script syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/condor-tailnet-serve.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | Format-List
+            exit 1
+          }

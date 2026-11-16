@@ -21,6 +21,10 @@ if (initial) navigate(initial);
 
 async function apiGet(path) {
   const response = await fetch(path, { headers: { Accept: "application/json" }, cache: "no-store" });
+  const contentType = response.headers.get("content-type") || "";
+  if ((response.redirected || response.status === 403) && !contentType.includes("application/json")) {
+    throw new Error("cloudflare_access_login_required");
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
@@ -117,6 +121,12 @@ async function refreshStatus() {
     alpaca.textContent = health.alpaca_configured ? "Broker configurato" : "Credenziali mancanti";
     alpaca.className = health.alpaca_configured ? "pill online" : "pill muted";
     notice.hidden = true;
+    if (!health.access_configured) {
+      document.querySelector("#account-state").textContent = "Cloudflare Access non configurato";
+      detail.textContent = "Le chiavi Alpaca PAPER sono sul server, ma i dati del conto restano protetti. Configura Cloudflare Access e i parametri ACCESS_TEAM_DOMAIN e ACCESS_AUD.";
+      clearAccount();
+      return;
+    }
     if (!health.alpaca_configured) {
       document.querySelector("#account-state").textContent = "Credenziali mancanti";
       detail.textContent = "Configura le chiavi Alpaca PAPER nei Worker Secrets di Cloudflare, mai nel browser.";
@@ -127,16 +137,21 @@ async function refreshStatus() {
     await refreshReconciliation();
     detail.textContent = "Dati letti direttamente dal conto Alpaca PAPER. Le chiavi e il token privato restano sul server.";
   } catch (error) {
-    status.textContent = "Backend o broker non raggiungibile";
+    const accessError = error.message === "cloudflare_access_required" || error.message === "cloudflare_access_not_configured" || error.message === "cloudflare_access_login_required";
+    status.textContent = accessError ? "Cloudflare Access da configurare" : "Backend o broker non raggiungibile";
     dot.classList.add("offline");
     sidebarDot.classList.add("offline");
     runtime.textContent = "Non disponibile";
     alpaca.textContent = "Connessione non verificata";
     alpaca.className = "pill muted";
     notice.hidden = false;
-    notice.querySelector("strong").textContent = "Connessione non disponibile";
-    notice.querySelector("span").textContent = error.message;
-    detail.textContent = "Controlla il runtime, le credenziali Alpaca PAPER e la protezione Cloudflare Access.";
+    notice.querySelector("strong").textContent = accessError ? "Accesso sicuro non configurato" : "Connessione non disponibile";
+    notice.querySelector("span").textContent = accessError
+      ? (error.message === "cloudflare_access_login_required"
+        ? "Apri /api/alpaca/status in una nuova scheda, completa il login Cloudflare Access, poi torna qui e ricarica."
+        : "Il conto Alpaca è protetto. Configura Cloudflare Access per autorizzare la lettura dei dati.")
+      : error.message;
+    detail.textContent = "Le chiavi restano sul server; non inserirle mai nel browser.";
   }
 }
 
