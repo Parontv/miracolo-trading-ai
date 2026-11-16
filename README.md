@@ -1,49 +1,50 @@
 # Miracolo Trading AI
 
-Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker**. L'app è una dashboard web servita direttamente da Cloudflare Workers; la scansione usa un Cron Trigger ogni minuto e non dipende dal browser aperto né da un server Linux sempre acceso.
+**Miracolo integra i progetti upstream originali Condor e Hummingbot.** Non ne ricostruisce dashboard, backend o motore di trading paralleli.
 
-## Architettura
+## Regola di architettura
 
-- **Cloudflare Worker**: API same-origin e scanner schedulato.
-- **Cloudflare D1**: journal persistente di stato e segnali.
-- **Cloudflare Workers Static Assets**: dashboard mobile-first dalla cartella `web/`.
-- **Alpaca PAPER**: unica integrazione broker; le chiavi sono Worker Secrets, mai esposte al browser.
-- **Cloudflare Access**: protegge gli endpoint privati e la dashboard.
-- **Condor**: solo riferimento UI/UX. Hummingbot e simulatori browser non sono nel percorso di esecuzione.
+- **Condor** è l'applicazione principale: utilizzare il progetto completo, inclusi dashboard, backend, agenti, routine, portfolio, monitoraggio e gestione bot.
+- **Hummingbot** è il motore originale: utilizzare connettori, strategie/controller, executor e gestione del ciclo ordini.
+- **Hummingbot API** viene integrata secondo le modalità e le versioni richieste da Condor.
+- **Miracolo** fornisce branding, configurazione, accesso unificato e integrazioni strettamente necessarie.
+- **Alpaca PAPER** è il broker iniziale richiesto, subordinatamente alla verifica del supporto reale nella versione upstream adottata. LIVE resta disabilitato.
 
-## Stato reale
+L'integrazione deve utilizzare codice upstream completo, non soltanto una UI simile o un adapter di sola lettura. Conservare licenze, attribuzioni, configurazioni e comportamento originali. Le modifiche locali devono essere minime, isolate e documentate.
 
-| Componente | Stato |
-|---|---|
-| Dashboard statica | Implementata |
-| Worker API Cloudflare | Implementata, da distribuire |
-| Cron scanner crypto EMA 9/21 | Implementato con cursori per simbolo, recupero dei bar persi e controllo dati stale; da distribuire |
-| Journal D1 | Segnali, cursori, prenotazioni rischio e schema registro ordini pronti; database da creare nell'account Cloudflare |
-| Lettura privata Alpaca PAPER | Implementata nel Worker, richiede secrets e Cloudflare Access |
-| Risk Gateway | Modulo Cloudflare e policy Python implementati e testati; controlli non ancora collegati all'invio ordini |
-| Riconciliazione broker/journal | Implementata in sola lettura, con controlli su posizioni, ordini e stop; da verificare su account reale PAPER |
-| Macchina a stati ordini | Implementata e testata, non ancora collegata all'invio ordini |
-| Motore di esecuzione end-to-end | Ancora da implementare e testare |
-| Invio ordini | **Bloccato** |
-| LIVE | **Disabilitato** |
+## Repository ufficiali
 
-La scansione interroga separatamente BTC/USD, ETH/USD e QNT/USD, usa solo barre da 1 minuto chiuse e controlla che i dati siano recenti. I cursori D1 consentono di recuperare i crossover delle barre non ancora elaborate dopo un ritardo del Cron. La scansione registra segnali, non ordini. Nessun ordine viene inviato da questa versione.
+- Condor: https://github.com/hummingbot/condor
+- Hummingbot: https://github.com/hummingbot/hummingbot
+- Hummingbot API: https://github.com/hummingbot/hummingbot-api
 
-## Pubblicazione
+Il riferimento esatto di ogni componente deve essere fissato e registrato (commit/tag), non lasciato implicitamente mobile.
 
-Segui [la guida Cloudflare](docs/runtime-deployment.md). Il primo deploy richiede un D1 database e tre GitHub repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` e `D1_DATABASE_ID`. Dopo il primo deploy, attiva Cloudflare Access sul Worker e aggiungi i secrets Alpaca PAPER e Access. Il workflow pubblica automaticamente gli aggiornamenti su `main`.
+## Runtime e pubblicazione
 
-Il link finale avrà il formato `https://miracolo-trading-ai.<workers-subdomain>.workers.dev`. Il sottodominio è assegnato dal tuo account Cloudflare, quindi non viene inventato né dato per attivo prima della verifica.
+Condor e Hummingbot richiedono servizi persistenti e dipendenze proprie. Cloudflare Workers può gestire il livello edge/pubblico, ma non va considerato automaticamente il runtime completo per lo stack.
+
+Prima di scegliere l'hosting, verificare i requisiti upstream e avviare realmente tutti i servizi necessari. Usare un ambiente compatibile con Docker, persistenza, networking privato, database e processi di background. Non riscrivere i componenti upstream per adattarli artificialmente a Workers.
+
+## Stato e distribuzione
+
+Questo README definisce la direzione architetturale, non certifica che lo stack completo sia già installato o operativo. L'integrazione sarà considerata completata solo dopo:
+- acquisizione e inizializzazione dei repository/submodule originali;
+- verifica di versioni, licenze, dipendenze e configurazioni;
+- build e test upstream;
+- avvio dello stack completo e health check;
+- verifica delle connessioni tra Condor, Hummingbot API e motore;
+- test PAPER end-to-end di dati, portfolio, ordini, cancellazione, stop, riconciliazione e recupero;
+- verifica web desktop/mobile e verifica post-deploy.
+
+Non dichiarare operativo ciò che non è stato verificato.
 
 ## Sicurezza
 
-Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Usa esclusivamente credenziali Alpaca PAPER. Il codice non abilita LIVE e non invia ordini. Prima di qualsiasi esecuzione PAPER dovranno essere completati Risk Gateway, riconciliazione ordini e ciclo di protezione stop-loss end-to-end.
+- Solo Alpaca PAPER nella fase iniziale, se supportato dalla versione upstream.
+- LIVE disabilitato.
+- Nessuna chiave o token in Git, frontend, URL o log.
+- API, MQTT e database non esposti pubblicamente senza autenticazione e rete privata.
+- Nessun ordine abilitato prima del superamento dei test end-to-end e dei controlli di rischio.
 
-## Test locali
-
-```bash
-python -m unittest discover -s tests -v
-node --check web/app.js
-node --input-type=module --check < cloudflare/worker.js
-node --test tests/cloudflare-worker.test.mjs tests/cloudflare-risk-gateway.test.mjs tests/cloudflare-order-lifecycle.test.mjs
-``
+Per tutte le regole di sviluppo consultare [docs/UPSTREAM_ALIGNMENT.md](docs/UPSTREAM_ALIGNMENT.md).
