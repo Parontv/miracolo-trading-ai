@@ -17,6 +17,12 @@ jobs:
         run: |
           test -d upstream/condor
           test "$(git -C upstream/condor rev-parse HEAD)" = "2442752df1259651002034055a32d974da29a361"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile original Condor Python sources
+        working-directory: upstream/condor
+        run: python -m compileall -q .
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
