@@ -4,8 +4,8 @@ Miracolo integra **Condor e Hummingbot originali**, con **Alpaca PAPER come unic
 
 ## Architettura
 
-- **Condor**: dashboard e control room originali, non ricostruite.
-- **Hummingbot + Hummingbot API**: motore e servizi originali, secondo i requisiti upstream.
+- **Condor**: dashboard e control room originali, non ricostruite; sorgente upstream inclusa come Git submodule in `upstream/condor/`.
+- **Hummingbot + Hummingbot API**: motore e servizi originali, secondo i requisiti upstream e l'installazione ufficiale Condor.
 - **Cloudflare Worker**: accesso web Miracolo e API edge compatibili.
 - **Cloudflare D1**: database Miracolo già previsto dal progetto; mantenere il database esistente e la relativa associazione, non crearne uno duplicato.
 - **Cloudflare Workers Static Assets**: web app mobile-first dalla cartella `web/`, tema scuro.
@@ -26,6 +26,10 @@ Miracolo integra **Condor e Hummingbot originali**, con **Alpaca PAPER come unic
 | LIVE | Disabilitato |
 
 La scansione registra segnali EMA 9/21 su barre crypto chiuse da un minuto. Non invia ordini. La dashboard Miracolo non sostituisce le funzioni originali di Condor.
+
+## Sorgente upstream Condor
+
+Il submodule ufficiale è fissato al commit `2442752df1259651002034055a32d974da29a361`. Clonare il repository con `git clone --recurse-submodules` e verificare il pin con `git -C upstream/condor rev-parse HEAD`. Le istruzioni e i requisiti di installazione sono in [docs/condor-integration.md](docs/condor-integration.md). Non copiare né riscrivere la dashboard: si usa quella upstream.
 
 ## Collegamento Condor
 
