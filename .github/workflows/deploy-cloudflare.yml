@@ -21,6 +21,10 @@ jobs:
           node-version: '22'
       - name: Check browser JavaScript syntax
         run: node --check web/app.js
+      - name: Check PWA service worker and manifest
+        run: |
+          node --check web/service-worker.js
+          node -e 'const fs = require("node:fs"); const manifest = JSON.parse(fs.readFileSync("web/manifest.webmanifest", "utf8")); if (manifest.display !== "standalone" || manifest.start_url !== "/" || !manifest.icons?.length) process.exit(1);'
       - name: Check Worker module syntax
         run: node --input-type=module --check < cloudflare/worker.js
       - name: Run Cloudflare unit tests
