@@ -22,7 +22,7 @@ if (initial) navigate(initial);
 async function apiGet(path) {
   const response = await fetch(path, { headers: { Accept: "application/json" }, cache: "no-store" });
   const contentType = response.headers.get("content-type") || "";
-  if (response.redirected && !contentType.includes("application/json")) {
+  if ((response.redirected || response.status === 403) && !contentType.includes("application/json")) {
     throw new Error("cloudflare_access_login_required");
   }
   const data = await response.json().catch(() => ({}));
