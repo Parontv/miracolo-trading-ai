@@ -155,3 +155,25 @@ footer{color:#74869c}
 #view-dashboard .content-grid .panel:has(#engine-status) { display: none !important; }
 .browser-bot-panel, .browser-metrics, .browser-rules, #browser-market-list,
 #browser-event-list, #browser-position-list, #browser-trade-list { display: none !important; }
+
+/* Miracolo dark terminal theme */
+:root{color-scheme:dark;color:#e6edf7;background:#0b1018}
+body{background:#0b1018;color:#e6edf7}
+.sidebar{background:#101923;border-color:#202d3b}
+.brand{color:#f1f5fb}.brand small{color:#8b9bb0}.brand-mark{background:#1b786d}
+.nav-link{color:#a4b2c5}.nav-link:hover,.nav-link.active{background:#19332f;color:#8ce0cc}
+.sidebar-bottom{border-color:#243140;color:#91a0b4}
+.main{color:#e6edf7}.eyebrow{color:#8294ab}h1,h2,h3,.metric strong,.settings-list strong{color:#e6edf7}
+p,.status,.metric span,.metric small,.settings-list span,.muted{color:#91a0b4}
+.notice{background:#302819;border-color:#5b4827;color:#f1d69a}
+.metric,.panel{background:#111c28;border-color:#263444;box-shadow:none}
+.metric span{color:#9cacc0}.metric small{color:#8192a8}
+.mode,.tag{background:#18342f;color:#8ce0cc}.tag{background:#1b2938;color:#b0c4dd}
+.pill.muted{background:#253242;color:#a8b6c9}.pill.online{background:#183a30;color:#8ce0b6}
+.settings-list>div,.server-row,.balance-row,.connector-block,.empty-row{border-color:#263444}
+.refresh-button,.select-server{background:#182633;border-color:#334658;color:#8ce0cc}
+.refresh-button:hover,.select-server:hover{background:#203b39}
+footer{color:#74869d}.empty-icon{background:#18342f;color:#8ce0cc}
+.nav-link.condor-link{color:#8ce0cc;border:1px solid #28544b;background:#142923}
+.nav-link.condor-link:hover{background:#1b3a33}
+.activity-row{border-color:#263444}.positive{color:#8ce0b6}.negative{color:#ff9a9a}
