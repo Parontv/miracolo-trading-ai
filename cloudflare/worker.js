@@ -305,20 +305,30 @@ async function routeApi(request, env) {
   return response({ ok: false, error: "not_found" }, 404);
 }
 
+function redirectToCondor(request, env) {
+  const destination = String(env.CONDOR_WEB_URL || "").trim();
+  try {
+    const target = new URL(destination);
+    const source = new URL(request.url);
+    if (target.protocol !== "https:" || target.username || target.password) {
+      return response({ ok: false, error: "condor_url_must_be_https" }, 503);
+    }
+    if (target.origin === source.origin) {
+      return response({ ok: false, error: "condor_redirect_loop_blocked" }, 503);
+    }
+    return Response.redirect(target.href, 302);
+  } catch {
+    return response({ ok: false, error: "condor_runtime_not_configured" }, 503);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/condor") {
-      const destination = String(env.CONDOR_WEB_URL || "").trim();
-      try {
-        const target = new URL(destination);
-        if (target.protocol !== "https:" || target.username || target.password) {
-          return response({ ok: false, error: "condor_url_must_be_https" }, 503);
-        }
-        return Response.redirect(target.href, 302);
-      } catch {
-        return response({ ok: false, error: "condor_runtime_not_configured" }, 503);
-      }
+    // Condor is the primary application when its authenticated HTTPS runtime
+    // is configured. Keep the Miracolo static page as a diagnostic fallback.
+    if (url.pathname === "/condor" || (url.pathname === "/" && env.CONDOR_WEB_URL)) {
+      return redirectToCondor(request, env);
     }
     if (url.pathname.startsWith("/api/")) {
       try { return await routeApi(request, env); }
