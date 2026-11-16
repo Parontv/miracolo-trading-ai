@@ -1,73 +1,90 @@
-# Regole di allineamento upstream
+# Regole vincolanti di sviluppo: upstream-first
 
-Queste regole sono vincolanti per ogni modifica a Miracolo Trading AI.
+Queste regole governano ogni modifica a Miracolo Trading AI. La priorità è utilizzare i progetti originali già esistenti e funzionanti, non ricostruirli.
 
-## Progetti di riferimento
+## Regola fondamentale
 
-- Condor: https://github.com/hummingbot/condor
-- Hummingbot: https://github.com/hummingbot/hummingbot
+**Condor e Hummingbot devono essere acquisiti e integrati come progetti upstream completi, mantenendo codice, interfacce, backend, configurazioni, dipendenze e modalità operative originali.**
 
-Prima di progettare o implementare una funzione, verificare nei repository ufficiali se esiste già una soluzione mantenuta e adatta. Consultare codice, documentazione, API, configurazioni, release e licenze; non basarsi soltanto sul nome di una funzione o su esempi non verificati.
+Miracolo è il prodotto/contenitore che li integra e li personalizza. Non deve sostituirli con implementazioni proprietarie equivalenti.
 
-## Gerarchia delle decisioni
+- **Condor (https://github.com/hummingbot/condor):** piattaforma applicativa principale. Riutilizzare dashboard, backend, agenti, routine, portfolio, monitoraggio e gestione bot così come forniti dal progetto.
+- **Hummingbot (https://github.com/hummingbot/hummingbot):** motore di trading originale. Riutilizzare connettori, strategie/controller, executor, API e ciclo di vita ordini originali.
+- **Hummingbot API:** utilizzare il servizio ufficiale quando richiesto dalla versione di Condor e dall'architettura upstream.
+- **Miracolo:** solo integrazione, configurazione, branding e adattamenti specifici realmente necessari, tra cui la configurazione iniziale Alpaca PAPER e la distribuzione.
+ 
+Il termine "integrare" non significa copiare soltanto la grafica, creare un clone semplificato o collegare una dashboard vuota. Significa portare nell'app l'applicazione upstream completa e far funzionare i suoi servizi e le sue dipendenze.
 
-1. Riutilizzare direttamente componenti upstream compatibili.
-2. Integrare le funzionalità upstream tramite API, interfacce e configurazioni ufficiali.
-3. Se serve un adattamento, realizzare un adapter sottile e isolato, mantenendo intatto il comportamento upstream.
-4. Modificare o fare fork del codice upstream soltanto quando le prime tre opzioni non sono praticabili; documentare motivo, file, differenze e modalità di riallineamento agli aggiornamenti upstream.
-5. Scrivere codice proprietario nuovo soltanto per ciò che manca davvero nei progetti originali o per l'integrazione specifica con Cloudflare, D1 e Alpaca PAPER.
+## Gerarchia obbligatoria delle decisioni
+
+1. Importare e utilizzare il componente upstream originale, preferibilmente tramite Git submodule o meccanismo ufficiale equivalente, fissando una versione/commit verificabile.
+2. Mantenere intatti codice, configurazioni e comportamento upstream.
+3. Collegare i componenti tramite API, configurazioni e interfacce ufficiali.
+4. Aggiungere adapter Miracolo sottili e isolati soltanto per colmare incompatibilità dimostrate.
+5. Applicare patch o fork upstream solo se indispensabile; documentare motivazione, differenze e procedura di riallineamento.
+6. Scrivere codice nuovo solo per funzioni che non esistono nei progetti originali o per l'integrazione specifica di Miracolo.
 
 ## Divieti
 
-- Non riscrivere da zero funzioni già presenti in Condor o Hummingbot.
-- Non creare un secondo motore di trading, scheduler, strategia, dashboard o sistema di gestione ordini se l'equivalente upstream è riutilizzabile.
-- Non introdurre librerie o servizi alternativi senza una necessità verificata.
-- Non dichiarare una funzione integrata, collegata o operativa finché non è stata eseguita una verifica reale.
-- Non copiare codice senza controllare licenza, attribuzioni, dipendenze e obblighi di distribuzione.
-- Non sostituire componenti upstream con mock o simulazioni senza dichiararlo chiaramente.
+- Non riscrivere Condor o Hummingbot.
+- Non sostituire Condor con la dashboard proprietaria Miracolo.
+- Non creare un secondo motore, scheduler, sistema agenti, strategia, portfolio o gestione ordini quando esiste già una funzione upstream.
+- Non considerare una semplice API read-only o una replica grafica come integrazione completa.
+- Non rimuovere funzionalità o configurazioni upstream per semplificare il deploy senza una decisione tecnica documentata.
+- Non inventare supporto broker, runtime o compatibilità.
+- Non dichiarare un componente integrato/operativo finché non sono stati avviati e verificati i servizi reali.
 
-## Vincolo architetturale Cloudflare
+## Regola di acquisizione e inventario
 
-Cloudflare Workers, D1 e Static Assets costituiscono il livello web/serverless di pubblicazione di Miracolo. Non si deve presumere che possano eseguire senza adattamenti processi persistenti o servizi backend richiesti da Condor o Hummingbot.
+Prima di intervenire sul codice:
+1. Verificare repository ufficiali, licenze, release e commit compatibili di Condor, Hummingbot e Hummingbot API.
+2. Verificare il contenuto effettivo dei submodule e che siano inizializzati ricorsivamente nella build/deploy.
+3. Ricavare dai file upstream (README, Makefile, Docker Compose, manifest, env example) i requisiti reali.
+4. Elencare tutti i servizi, database, broker, code, volumi, porte, health check e segreti richiesti.
+5. Confrontare l'installazione upstream completa con ciò che esiste in Miracolo e individuare ciò che manca.
+6. Non eliminare né sostituire l'applicazione upstream durante questa analisi.
 
-Prima di collegare un componente, verificare i suoi requisiti reali di runtime, persistenza, rete, storage e processi in background. Se un componente upstream richiede un runtime non disponibile su Cloudflare Workers, mantenere il componente upstream e progettare un'integrazione compatibile; non riscriverlo per simulare un supporto inesistente. L'eventuale necessità di un runtime separato va esplicitata, non introdotta di nascosto.
+## Personalizzazioni Miracolo
 
-## Regole operative per ogni intervento
+- Nome, branding e accesso unificato Miracolo.
+- Configurazioni e integrazioni specifiche necessarie per l'ambiente scelto.
+- Alpaca PAPER come broker iniziale richiesto dal progetto, **solo dopo aver verificato che la versione upstream e i suoi connettori/API lo supportino realmente**. Se non supportato nativamente, documentare il gap e valutare un adapter ufficiale/isolato senza alterare il core.
+- LIVE sempre disabilitato nella fase iniziale.
+- Le impostazioni originali di Condor/Hummingbot vanno conservate; modificare solo i parametri indispensabili, tracciandoli in file di configurazione Miracolo separati quando possibile.
 
-Prima di modificare il codice:
+## Distribuzione e runtime
 
-1. Individuare il componente upstream corrispondente e la versione/commit di riferimento.
-2. Leggere implementazione e documentazione ufficiali.
-3. Confrontare il codice presente nel repository Miracolo con l'upstream.
-4. Descrivere in modo breve cosa si riutilizza, cosa manca e perché serve ogni modifica proprietaria.
+Condor e Hummingbot includono servizi persistenti e dipendenze che non possono essere dati per scontati su Cloudflare Workers.
 
-Dopo la modifica:
+- Cloudflare può essere il livello pubblico per dominio, autenticazione, routing, asset e servizi edge compatibili.
+- Il runtime completo Condor/Hummingbot deve essere ospitato su un ambiente che soddisfi i requisiti upstream (ad esempio Docker/servizi persistenti).
+- Non riscrivere servizi persistenti come Worker per forzare un deploy su Cloudflare.
+- Prima di scegliere l'hosting, verificare costi, persistenza, networking privato, database, storage e riavvio automatico.
+- Non esporre pubblicamente Hummingbot API, MQTT, database o pannelli amministrativi senza autenticazione e rete privata.
 
+## Sicurezza e trading
+
+- Alpaca PAPER è l'unico ambiente broker autorizzato per la fase iniziale di Miracolo.
+- Non inserire credenziali LIVE e mantenere disabilitate le rotte LIVE.
+- Non abilitare ordini finché il percorso reale PAPER non supera test end-to-end di connessione, dati, portfolio, invio/cancellazione, stop, riconciliazione, riavvio e recupero.
+- Segreti solo in secret manager/environment protetti; mai in Git, frontend, URL o log.
+- Non attribuire a Condor/Hummingbot limiti di rischio personalizzati di Miracolo come se fossero default upstream.
+
+## Test e deploy obbligatori
+
+Prima di ogni deploy:
 1. Eseguire i test upstream pertinenti e quelli Miracolo.
-2. Verificare compatibilità, sicurezza, gestione errori e persistenza.
-3. Verificare che il comportamento non sia stato duplicato o alterato inutilmente.
-4. Pubblicare solo dopo test superati; verificare il servizio effettivamente distribuito.
+2. Verificare build frontend e backend, import, dipendenze e configurazioni.
+3. Avviare lo stack completo nell'ambiente previsto.
+4. Verificare health check di ogni servizio, connessione tra servizi, persistenza e riavvio.
+5. Eseguire test PAPER end-to-end senza LIVE.
+6. Verificare l'app dal browser e da dispositivo mobile.
+7. Pubblicare solo con controlli superati e poi verificare il servizio distribuito.
 
-## Vincoli di trading e sicurezza
+Una build verde da sola non prova che il trading sia collegato o operativo.
 
-- Alpaca PAPER è l'unico broker autorizzato nel progetto attuale.
-- LIVE deve restare disabilitato.
-- Nessun ordine deve essere abilitato finché risk gateway, journal, riconciliazione e protezione stop-loss non sono stati verificati end-to-end.
-- Segreti e credenziali non devono mai essere inseriti nel repository, nel frontend o nei log.
+## Eccezioni e continuità
 
-## Eccezioni
+Ogni eccezione va motivata e documentata in PR/commit. Se un componente non è compatibile o mancano credenziali/servizi, completare tutte le verifiche indipendenti, indicare il blocco con precisione e non simulare il completamento.
 
-Ogni eccezione a queste regole deve essere motivata e documentata nel pull request o nel commit. In caso di dubbio, fermarsi alla verifica e non inventare una nuova implementazione.
-
-
-## Continuità operativa e autonomia
-
-Lavorare in modo continuativo e autonomo, riducendo al minimo le interruzioni e le richieste di conferma.
-
-- Non chiedere conferma per analisi, verifiche, test, correzioni documentali e modifiche reversibili e a basso rischio già comprese nell'obiettivo del progetto.
-- Procedere in sequenza attraverso le attività dipendenti, scegliendo il percorso più aderente al codice esistente e documentando le decisioni.
-- Quando un'attività è bloccata da credenziali, permessi, dati o azioni che soltanto l'utente può compiere, completare nel frattempo tutte le attività indipendenti e preparare istruzioni precise per sbloccarla.
-- Non simulare mai il completamento di un'attività bloccata e non dichiarare verifiche non eseguite.
-- Prima di operazioni irreversibili, costose, che espongono servizi o che possono comportare ordini finanziari, fermarsi e richiedere l'autorizzazione necessaria.
-- Mantenere un registro sintetico di attività completate, verifiche, blocchi e prossimi passi, così da riprendere senza ripetere il lavoro.
-- Non interrompere il flusso per chiedere all'utente se desidera proseguire quando il passo successivo è già definito e sicuro.
+Lavorare in modo autonomo su analisi, modifiche reversibili e test; chiedere conferma solo per azioni irreversibili, costose, che espongono servizi o che possono generare ordini finanziari.
