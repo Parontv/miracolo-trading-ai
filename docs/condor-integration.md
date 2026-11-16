@@ -61,3 +61,12 @@ Prima di dichiarare operativo il sistema, eseguire su un host persistente:
 3. `make run` e `make status`.
 4. Verifica della dashboard dal browser e del collegamento all'API.
 5. Test PAPER end-to-end di dati, portfolio, ordine, cancellazione, stop, arresto/riavvio e riconciliazione.
+
+
+## Compatibilità Alpaca: verifica obbligatoria
+
+La revisione upstream Hummingbot fissata sopra non contiene un connettore Alpaca: il controllo del codice sorgente non trova un modulo/connector Alpaca e la lista ufficiale dei connector Hummingbot non lo elenca. Quindi **Condor + Hummingbot non possono inviare ordini ad Alpaca PAPER nativamente** in questa configurazione.
+
+Il vecchio repository `Parontv/Miracolo-lab` contiene un adapter Alpaca PAPER e un executor separato. Non sono un connector Hummingbot e non vanno collegati fingendo che lo siano. Per rispettare contemporaneamente il vincolo Alpaca-only e l'uso del motore Hummingbot, serve progettare e testare un connector Alpaca dedicato per Hummingbot, mantenendo l'adapter esistente come riferimento per endpoint e controlli PAPER. In alternativa, l'esecuzione resterebbe separata da Hummingbot, scelta che non soddisfa il requisito di un unico motore Hummingbot.
+
+Finché il connector non esiste e non supera i test PAPER end-to-end, Condor può essere installato e usato per la dashboard/monitoraggio, ma non va dichiarato operativo per eseguire ordini Alpaca. Nessuna credenziale LIVE e nessun ordine automatico.
