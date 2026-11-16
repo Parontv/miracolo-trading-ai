@@ -5,9 +5,10 @@ Questa procedura pubblica **solo la dashboard Condor** nel tailnet Tailscale. No
 ## Installazione runtime
 
 1. In Windows installa WSL2 con Ubuntu e Docker Desktop con integrazione WSL attiva.
-2. Apri Ubuntu (WSL2), scegli una cartella vuota e avvia l'installer ufficiale Condor:
+2. Apri Ubuntu (WSL2), crea una cartella dedicata e avvia l'installer ufficiale Condor da lì:
 
 ```bash
+mkdir -p ~/miracolo-runtime && cd ~/miracolo-runtime
 curl -fsSL https://raw.githubusercontent.com/hummingbot/deploy/main/setup.sh | bash
 ```
 
@@ -15,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/hummingbot/deploy/main/setup.sh | b
 4. Terminata l'installazione:
 
 ```bash
-cd ~/condor
+cd ~/miracolo-runtime/condor
 make doctor
 make run
 ```
