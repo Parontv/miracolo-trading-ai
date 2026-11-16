@@ -305,6 +305,34 @@ test("Condor route redirects only to a configured HTTPS dashboard", async () => 
   assert.equal(ok.headers.get("location"), "https://condor.example.com/web");
 });
 
+test("root route redirects to the original Condor dashboard when configured", async () => {
+  const DB = mockDb();
+  const result = await worker.fetch(new Request("https://example.workers.dev/"), {
+    DB,
+    CONDOR_WEB_URL: "https://condor.example.com/web",
+  });
+  assert.equal(result.status, 302);
+  assert.equal(result.headers.get("location"), "https://condor.example.com/web");
+});
+
+test("root route keeps the diagnostic static app when Condor is not configured", async () => {
+  const DB = mockDb();
+  const assets = { async fetch() { return new Response("diagnostic fallback", { status: 200 }); } };
+  const result = await worker.fetch(new Request("https://example.workers.dev/"), { DB, ASSETS: assets });
+  assert.equal(result.status, 200);
+  assert.equal(await result.text(), "diagnostic fallback");
+});
+
+test("Condor route blocks redirect loops", async () => {
+  const DB = mockDb();
+  const result = await worker.fetch(new Request("https://example.workers.dev/condor"), {
+    DB,
+    CONDOR_WEB_URL: "https://example.workers.dev/",
+  });
+  assert.equal(result.status, 503);
+  assert.equal((await result.json()).error, "condor_redirect_loop_blocked");
+});
+
 test("Condor route fails closed when the dashboard URL is missing or unsafe", async () => {
   const DB = mockDb();
   const missing = await worker.fetch(new Request("https://example.workers.dev/condor"), { DB });

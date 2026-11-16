@@ -1,96 +1,83 @@
-# Stato operativo e prossime attività
+# Stato operativo Miracolo Trading AI
 
 Aggiornato: 2026-11-16
 
 ## Direzione vincolante
 
-- Prodotto: Miracolo Trading AI, web app accessibile da link.
-- Hosting della dashboard/API leggera: Cloudflare Workers + Static Assets + D1.
-- Base applicativa upstream: Condor, repository ufficiale https://github.com/hummingbot/condor.
-- Motore di trading: Hummingbot, repository ufficiale https://github.com/hummingbot/hummingbot.
-- Broker ammesso nella fase attuale: Alpaca PAPER soltanto.
-- LIVE: disabilitato.
-- Regola di sviluppo: upstream-first, nessuna duplicazione di funzioni già disponibili.
-- Regola di lavoro: continuità autonoma, ridurre le interruzioni; proseguire su attività sicure e indipendenti senza chiedere conferme superflue.
+- Condor upstream è la dashboard principale, non un semplice riferimento grafico.
+- Hummingbot + Hummingbot API sono il motore e il backend operativi.
+- Miracolo mantiene accesso, integrazioni specifiche, Cloudflare Worker e database D1 esistente.
+- Alpaca PAPER è l'unico broker ammesso nella fase iniziale; LIVE resta disabilitato.
+- Non duplicare dashboard, orchestrazione, agenti o order lifecycle già presenti in Condor/Hummingbot.
+- Nessun ordine automatico finché il connector Alpaca PAPER e il percorso di rischio end-to-end non sono verificati.
 
-## Verifiche repository
+## Stato del branch main
 
-### Branch main
-Contiene la web app Cloudflare:
-- `web/` dashboard statica;
-- `cloudflare/worker.js` API e scanner;
-- D1 e migrazioni;
-- workflow GitHub Actions per deploy.
+Il branch `main` contiene:
+- submodule ufficiale Condor in `upstream/condor`, fissato a `2442752df1259651002034055a32d974da29a361`;
+- web shell diagnostica Miracolo in `web/`;
+- Worker Cloudflare, API Alpaca PAPER di lettura e scanner EMA;
+- binding e migrazioni Cloudflare D1;
+- workflow CI e deploy.
 
-Lo scanner Worker registra segnali EMA 9/21 su barre crypto da un minuto. Non è il motore Hummingbot e non invia ordini. Il codice dichiara esplicitamente che l'invio ordini è bloccato.
+**Importante:** la shell `web/` non è la dashboard Condor. Prima della correzione descritta nell'audit, la root del sito mostrava la shell Miracolo e Condor era disponibile solo tramite redirect opzionale `/condor`. Il runtime Compose esistente avvia Miracolo API/scanner e Caddy; non avvia Condor né Hummingbot API.
 
-### Branch integration/condor-foundation
-Contiene:
-- Condor upstream come Git submodule in `upstream/condor`, fissato al commit `a817f6633a90afe41523377bfd360c0b9316d423`;
-- adapter Python Condor GET-only;
-- policy di sicurezza e test;
-- documentazione che identifica Condor come base applicativa, non come semplice ispirazione grafica.
+Nel branch `fix/condor-primary-dashboard-audit` la root `/` reindirizza alla dashboard Condor quando il secret `CONDOR_WEB_URL` è configurato e valido. Se manca, resta disponibile la shell diagnostica. Il redirect non avvia Condor: il runtime deve già essere installato e raggiungibile.
 
-I test CI di questo branch risultavano superati nel controllo precedente. Il branch non è stato unito a main.
+## Capacità Condor upstream
 
-### Divergenza tra branch
-Il confronto aggiornato mostra:
-- main: 120 commit avanti rispetto al merge base;
-- integration/condor-foundation: 38 commit avanti rispetto al merge base;
-- stato: diverged.
-
-Il branch integration elimina la precedente cartella `web/`. Un merge completo in main cancellerebbe quindi l'attuale dashboard Cloudflare. Non eseguire merge integrali. Integrare selettivamente componenti e documentazione dopo test.
-
-## Risultati audit upstream
-
-Condor upstream documenta già:
-- dashboard web;
-- portfolio e PnL;
-- monitoraggio bot;
-- trading CEX/DEX;
-- gestione ordini e posizioni via Hummingbot API;
+La versione fissata documenta:
+- dashboard web con portfolio, PnL, grafici, ordini e pannello trading;
+- monitoraggio bot Hummingbot;
+- gestione server Hummingbot API e credenziali exchange;
+- CEX e DEX, Gateway e liquidity pool;
 - agenti AI e routine.
 
-Hummingbot upstream fornisce:
-- connettori exchange;
-- strategie e controller;
-- executors e ciclo di vita degli ordini;
-- strumenti CLI e modalità paper trading.
+La lista esatta delle funzioni è nella documentazione upstream e in `docs/AUDIT_2026-11-16.md`. Non creare schermate Miracolo parallele per replicarle.
 
-Queste capacità devono essere riutilizzate quando compatibili. Evitare di replicare dashboard, agenti, orchestrazione, strategie o order lifecycle in codice Miracolo.
+## Stato delle connessioni
 
-## Vincolo infrastrutturale
+| Componente | Stato |
+|---|---|
+| Deploy Cloudflare Worker e D1 | Deploy del 16 novembre completato con successo |
+| Shell web Miracolo | Pubblicata, diagnostica/fallback |
+| Condor upstream source | Presente come submodule, commit fissato |
+| Condor runtime persistente | Non dimostrato attivo |
+| Hummingbot API runtime | Non dimostrato attivo |
+| Condor URL | Richiede secret `CONDOR_WEB_URL` |
+| Alpaca PAPER REST | Lettura separata, dipende dai secrets e da Cloudflare Access |
+| Alpaca come connector Hummingbot | Non implementato |
+| Invio ordini | Disabilitato |
+| Trading LIVE | Disabilitato |
 
-Cloudflare Workers può ospitare dashboard, API edge, autenticazione e storage D1. Non sostituisce il runtime persistente richiesto da Condor e Hummingbot API. Il README upstream Condor richiede Mac/Linux o WSL2 e Docker per Hummingbot API; Hummingbot è un runtime di trading continuo.
+## Vincoli infrastrutturali
 
-Conseguenza: il link pubblico della dashboard può restare su Cloudflare, ma il motore Condor/Hummingbot non può essere dichiarato operativo 24/7 finché non esiste un runtime persistente raggiungibile in modo privato e autenticato. Non esporre Hummingbot API pubblicamente. La preferenza attuale è non introdurre un VPS in questa fase: quindi mantenere l'app Cloudflare in modalità dashboard/monitoraggio e non simulare il motore.
+Condor richiede un host persistente Linux/macOS o Windows tramite WSL2, Python 3.12, Node 22, uv e Docker per Hummingbot API. Cloudflare Workers non sostituisce questi processi persistenti.
 
-## Problemi da risolvere prima dell'esecuzione
+Condor Local mode non ha login e ascolta su localhost. Per Android usare una rete privata autenticata, preferibilmente Tailscale Serve, o Cloudflare Tunnel con Access. Non esporre direttamente le porte 8088 o 8000, MQTT o database.
 
-1. Riconciliare le due implementazioni di rischio: il Worker Cloudflare e la policy Python del branch Condor hanno soglie differenti. Deve esistere una policy autorevole, non due controlli divergenti.
-2. Definire il confine tra dashboard Cloudflare e dashboard Condor per evitare duplicazioni: Condor è la UI upstream da riutilizzare; Cloudflare deve essere il punto di accesso/hosting solo dove tecnicamente compatibile.
-3. Verificare tutti i percorsi di esecuzione Hummingbot API e instradarli attraverso il controllo di rischio server-side prima di abilitare PAPER.
-4. Mantenere l'invio ordini disabilitato fino a test end-to-end di idempotenza, stop-loss, cancel, recovery e riconciliazione.
-5. Ripristinare il deploy Cloudflare solo quando sono disponibili i GitHub Actions secrets mancanti: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `D1_DATABASE_ID`. Le credenziali non devono essere inviate in chat o committate.
-6. Dopo il deploy, verificare URL effettivo, dashboard, endpoint API, Access e D1. Un workflow verde con step deploy saltati non conta come pubblicazione.
+La preferenza di progetto è non introdurre un VPS a pagamento. In assenza di un host già disponibile e sempre acceso, non è possibile dichiarare il bot 24/7. Il link Cloudflare può fare da punto di ingresso, ma non ospita il motore.
 
-## Sequenza operativa
+## Alpaca e Hummingbot
 
-1. Conservare main e la web app Cloudflare senza merge distruttivi.
-2. Aggiornare e verificare il submodule Condor rispetto all'upstream ufficiale; documentare commit e licenza.
-3. Mappare API Condor e Hummingbot API: letture, mutazioni, autenticazione, runtime e dipendenze.
-4. Confrontare i componenti rischio esistenti e scegliere un'unica policy.
-5. Integrare la UI upstream senza duplicarla, preservando l'accesso Cloudflare dove possibile.
-6. Eseguire test statici, unitari, integrazione e sicurezza.
-7. Deploy solo dopo test superati e secrets presenti; poi smoke test sul link reale.
+La revisione Hummingbot fissata non include un connector Alpaca. L'adapter Alpaca PAPER di Miracolo è separato e attualmente di sola lettura nella UI Cloudflare. Non dichiarare che Condor può inviare ordini Alpaca finché non viene implementato un connector Hummingbot dedicato.
 
-## Regola di continuità
+Piano: `docs/alpaca-hummingbot-connector-plan.md`.
 
-Non fermare il lavoro per chiedere conferme su attività di analisi, documentazione e test sicure. Quando una dipendenza richiede un'azione dell'utente (secrets, permessi o scelta infrastrutturale non reversibile), completare nel frattempo tutte le attività indipendenti e lasciare un blocco operativo preciso. Non dichiarare mai completato ciò che non è stato verificato.
+## Priorità operative
 
-## CI aggiunta il 2026-11-16
+1. Avviare Condor e Hummingbot API su un host persistente.
+2. Eseguire `make doctor`, `make status` e verificare le API Hummingbot.
+3. Configurare accesso privato HTTPS e il secret `CONDOR_WEB_URL`.
+4. Verificare root Cloudflare → Condor da browser Android.
+5. Verificare portfolio, server e bot con dati reali.
+6. Implementare il connector Alpaca PAPER in Hummingbot e i test end-to-end.
+7. Solo dopo tutti i test, valutare l'esecuzione PAPER. LIVE resta disabilitato.
 
-- Aggiunto `.github/workflows/validate-cloudflare.yml` per controllare sintassi frontend/Worker ed eseguire i test unitari Cloudflare su push e pull request verso main.
-- Il workflow di deploy ora ripete gli stessi controlli prima di verificare le credenziali e distribuire.
-- Il deploy automatico su push è limitato alle modifiche a frontend, Worker, migrazioni, configurazione Wrangler e workflow di deploy. Le sole modifiche documentali non avviano una pubblicazione.
-- I workflow sono stati committati; l'esito del run deve essere controllato su GitHub Actions prima di considerare superata la verifica. Non è stato possibile leggere da qui lo stato live dei run.
+## Secrets
+
+Non inserire segreti in Git o chat. Per Cloudflare servono i secrets di deploy già previsti. Per la dashboard Condor serve `CONDOR_WEB_URL`. Per l'API Alpaca Worker servono chiavi PAPER e configurazione Cloudflare Access (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`). Il deploy non deve mai usare credenziali LIVE.
+
+## Audit completo
+
+Consultare `docs/AUDIT_2026-11-16.md` per riscontri, correzioni, blocchi infrastrutturali e criteri di accettazione.

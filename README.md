@@ -8,7 +8,7 @@ Miracolo integra **Condor e Hummingbot originali**, con **Alpaca PAPER come unic
 - **Hummingbot + Hummingbot API**: motore e servizi originali, secondo i requisiti upstream e l'installazione ufficiale Condor.
 - **Cloudflare Worker**: accesso web Miracolo e API edge compatibili.
 - **Cloudflare D1**: database Miracolo già previsto dal progetto; mantenere il database esistente e la relativa associazione, non crearne uno duplicato.
-- **Cloudflare Workers Static Assets**: web app mobile-first dalla cartella `web/`, tema scuro.
+- **Cloudflare Workers Static Assets**: shell diagnostica Miracolo dalla cartella `web/`, tema scuro. Quando `CONDOR_WEB_URL` è configurato, la root del link Cloudflare reindirizza alla dashboard Condor originale; la shell resta un fallback diagnostico.
 - **Alpaca PAPER**: adapter esistente nel vecchio Miracolo Lab, separato da Hummingbot. La revisione Hummingbot fissata non include un connector Alpaca nativo: per eseguire Alpaca attraverso Hummingbot serve un connector dedicato, da sviluppare e collaudare prima di qualsiasi ordine.
 - **Accesso privato Condor**: Tailscale Serve (preferito) oppure Cloudflare Tunnel + Access; non esporre le porte di servizio.
 
@@ -33,9 +33,9 @@ Il submodule ufficiale è fissato al commit `2442752df1259651002034055a32d974da2
 
 ## Collegamento Condor
 
-Impostare il GitHub Actions secret `CONDOR_WEB_URL` con l'URL HTTPS della dashboard Condor, raggiungibile dal browser e protetto da Cloudflare Access. Il workflow lo carica come Worker Secret durante il deploy. Il link Condor nella barra laterale apre la dashboard originale in una nuova scheda. Non esporre direttamente la porta locale 8088 né la porta Hummingbot API 8000.
+Impostare il GitHub Actions secret `CONDOR_WEB_URL` con l'URL HTTPS della dashboard Condor, raggiungibile dal browser e protetto da Cloudflare Access. Il workflow lo carica come Worker Secret durante il deploy. Quando `CONDOR_WEB_URL` è configurato, anche la root del link Cloudflare apre direttamente la dashboard Condor originale. Il link `/condor` resta disponibile come percorso esplicito. Non esporre direttamente la porta locale 8088 né la porta Hummingbot API 8000.
 
-Il redirect conferma soltanto l'indirizzo configurato: la disponibilità di Condor, Hummingbot API e bot va verificata separatamente con i relativi health check.
+Il redirect conferma soltanto l'indirizzo configurato: la disponibilità di Condor, Hummingbot API e bot va verificata separatamente con i relativi health check. Vedi `docs/AUDIT_2026-11-16.md` per l'audit completo e i blocchi ancora aperti.
 
 ## Pubblicazione Cloudflare e D1 esistente
 
