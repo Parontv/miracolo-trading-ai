@@ -33,7 +33,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 
 3. Lo script verifica prima che Condor risponda localmente. Solo dopo configura Tailscale Serve in background verso `127.0.0.1:8088` e stampa l'URL HTTPS privato.
-4. Apri quell'URL su Android con Tailscale connesso e salvalo nei preferiti.
+4. Se GitHub CLI è installata e autenticata con permesso sul repository, lo script salva automaticamente `CONDOR_WEB_URL` nei GitHub Actions secrets e avvia il workflow Cloudflare. Altrimenti stampa il valore da inserire manualmente.
+5. Apri l'URL HTTPS su Android con Tailscale connesso e salvalo nei preferiti.
 
 Tailscale Serve è privato ai dispositivi autorizzati nel tailnet. La modalità Local di Condor non ha login: **non** esporre mai direttamente la porta 8088 su Internet o sulla LAN. Non usare `tailscale funnel`.
 
