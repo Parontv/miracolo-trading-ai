@@ -249,7 +249,8 @@ async function routeApi(request, env) {
     const bot = freshBotStatus(status);
     return response({
       ok: true, service: "miracolo", mode: "PAPER", live_enabled: false, broker: "alpaca",
-      alpaca_configured: configured(env), bot: { ...bot, signals_recorded: count?.total || 0 },
+      alpaca_configured: configured(env), access_configured: Boolean(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD),
+      bot: { ...bot, signals_recorded: count?.total || 0 },
       execution_enabled: false,
     });
   }
