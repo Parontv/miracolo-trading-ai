@@ -17,9 +17,10 @@ The workflow requires a Cloudflare API token with Workers Scripts:Edit and D1:Ed
 ## Connect the original Condor dashboard
 
 1. Install and run the official Condor application on a persistent Linux/WSL2 host, together with Hummingbot API and its Docker services as required by the upstream setup.
-2. Keep Condor bound to localhost. Expose its dashboard through Cloudflare Tunnel and protect it with Cloudflare Access. Do not publish port 8088 or Hummingbot API port 8000 directly.
-3. Add the HTTPS dashboard URL as the GitHub Actions secret `CONDOR_WEB_URL`. The deploy workflow uploads it as a Worker secret. The Miracolo sidebar entry `Condor` redirects to that original dashboard in a new tab. The Worker rejects non-HTTPS destinations.
-4. Verify the URL from a browser already authenticated through Access. A successful redirect alone does not prove that Condor or its Hummingbot API is healthy.
+2. Keep Condor bound to localhost. **Preferred private access:** install Tailscale on the host and the Android phone, connect both to the same tailnet, then run `tailscale serve --bg 8088` on the host (or on Windows if WSL2 localhost forwarding exposes Condor there). Tailscale Serve provides an HTTPS `.ts.net` URL reachable only from the tailnet. Do not use Tailscale Funnel.
+3. If a public hostname is specifically required, use Cloudflare Tunnel with a Cloudflare Access Allow policy in front of Condor. Never publish port 8088 or Hummingbot API port 8000 directly.
+4. Add the resulting HTTPS dashboard URL as the GitHub Actions secret `CONDOR_WEB_URL`. The deploy workflow uploads it as a Worker secret. The Miracolo sidebar entry `Condor` redirects to that original dashboard in a new tab. The Worker rejects non-HTTPS destinations.
+5. Keep Tailscale connected on the phone when using the private `.ts.net` URL. Verify the dashboard and Hummingbot API health separately; a successful redirect alone does not prove that Condor or its bots are healthy.
 
 The Cloudflare Worker and D1 database remain the Miracolo web/API layer. They do not run Condor or Hummingbot containers.
 
