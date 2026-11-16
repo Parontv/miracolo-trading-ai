@@ -11,7 +11,7 @@ Questa procedura pubblica **solo la dashboard Condor** nel tailnet Tailscale. No
 mkdir -p ~/miracolo-runtime && cd ~/miracolo-runtime
 ```
 
-3. Installa prima Hummingbot API come servizio locale, usando l'installer ufficiale:
+3. Installa prima Hummingbot API come servizio locale, usando l'installer ufficiale. Se propone Tailscale per l'API, non abilitarlo: Condor e API saranno sullo stesso WSL e l'API resterà su localhost.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hummingbot/deploy/main/setup.sh | bash -s -- --hummingbot-api
