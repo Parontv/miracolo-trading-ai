@@ -3,6 +3,12 @@ name: Deploy Cloudflare
 on:
   push:
     branches: [main]
+    paths:
+      - 'web/**'
+      - 'cloudflare/**'
+      - 'migrations/**'
+      - 'wrangler.jsonc'
+      - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
 
 jobs:
@@ -13,6 +19,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check browser JavaScript syntax
+        run: node --check web/app.js
+      - name: Check Worker module syntax
+        run: node --input-type=module --check < cloudflare/worker.js
+      - name: Run Cloudflare unit tests
+        run: node --test tests/cloudflare-worker.test.mjs tests/cloudflare-risk-gateway.test.mjs tests/cloudflare-order-lifecycle.test.mjs
       - name: Check deployment configuration
         id: config
         env:
