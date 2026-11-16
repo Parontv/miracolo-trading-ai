@@ -72,9 +72,10 @@ jobs:
           APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
           ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
           ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
+          CONDOR_WEB_URL: ${{ secrets.CONDOR_WEB_URL }}
         run: |
           set -euo pipefail
-          for name in APCA_API_KEY_ID APCA_API_SECRET_KEY ACCESS_TEAM_DOMAIN ACCESS_AUD; do
+          for name in APCA_API_KEY_ID APCA_API_SECRET_KEY ACCESS_TEAM_DOMAIN ACCESS_AUD CONDOR_WEB_URL; do
             if [ -n "${!name}" ]; then
               printf '%s' "${!name}" | npx wrangler@4 secret put "$name"
             fi
