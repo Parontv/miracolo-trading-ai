@@ -293,3 +293,27 @@ test("reconciliation detects a filled journal row without a broker position", ()
   );
   assert.ok(result.issues.some(issue => issue.type === "BROKER_POSITION_MISSING_FOR_FILLED_JOURNAL"));
 });
+
+
+test("Condor route redirects only to a configured HTTPS dashboard", async () => {
+  const DB = mockDb();
+  const ok = await worker.fetch(new Request("https://example.workers.dev/condor"), {
+    DB,
+    CONDOR_WEB_URL: "https://condor.example.com/web",
+  });
+  assert.equal(ok.status, 302);
+  assert.equal(ok.headers.get("location"), "https://condor.example.com/web");
+});
+
+test("Condor route fails closed when the dashboard URL is missing or unsafe", async () => {
+  const DB = mockDb();
+  const missing = await worker.fetch(new Request("https://example.workers.dev/condor"), { DB });
+  assert.equal(missing.status, 503);
+  assert.equal((await missing.json()).error, "condor_runtime_not_configured");
+  const unsafe = await worker.fetch(new Request("https://example.workers.dev/condor"), {
+    DB,
+    CONDOR_WEB_URL: "http://condor.internal:8088",
+  });
+  assert.equal(unsafe.status, 503);
+  assert.equal((await unsafe.json()).error, "condor_url_must_be_https");
+});
