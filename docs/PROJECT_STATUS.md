@@ -87,3 +87,10 @@ Conseguenza: il link pubblico della dashboard può restare su Cloudflare, ma il 
 ## Regola di continuità
 
 Non fermare il lavoro per chiedere conferme su attività di analisi, documentazione e test sicure. Quando una dipendenza richiede un'azione dell'utente (secrets, permessi o scelta infrastrutturale non reversibile), completare nel frattempo tutte le attività indipendenti e lasciare un blocco operativo preciso. Non dichiarare mai completato ciò che non è stato verificato.
+
+## CI aggiunta il 2026-11-16
+
+- Aggiunto `.github/workflows/validate-cloudflare.yml` per controllare sintassi frontend/Worker ed eseguire i test unitari Cloudflare su push e pull request verso main.
+- Il workflow di deploy ora ripete gli stessi controlli prima di verificare le credenziali e distribuire.
+- Il deploy automatico su push è limitato alle modifiche a frontend, Worker, migrazioni, configurazione Wrangler e workflow di deploy. Le sole modifiche documentali non avviano una pubblicazione.
+- I workflow sono stati committati; l'esito del run deve essere controllato su GitHub Actions prima di considerare superata la verifica. Non è stato possibile leggere da qui lo stato live dei run.
