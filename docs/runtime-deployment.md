@@ -1,6 +1,6 @@
 # Cloudflare Workers deployment
 
-Miracolo is deployed as a Cloudflare Worker with static assets, a one-minute Cron Trigger and a D1 journal. It does not require a continuously running Linux server or an open browser tab.
+This deployment hosts the Miracolo web dashboard, edge API, scheduled market-data scanner and D1 journal. The browser does not need to remain open. This Cloudflare deployment is **not** a Condor/Hummingbot runtime: those upstream services require a persistent host and Hummingbot API/Docker. Until that runtime is deliberately provided, the Cloudflare app is limited to dashboard, market monitoring and read-only Alpaca PAPER checks. Do not describe the complete Condor/Hummingbot trading system as 24/7 operational on Workers alone.
 
 ## First deployment
 
