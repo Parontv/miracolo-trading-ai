@@ -1,43 +1,53 @@
 # Miracolo Trading AI
 
-Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker**. L'app è una dashboard web servita direttamente da Cloudflare Workers; la scansione usa un Cron Trigger ogni minuto e non dipende dal browser aperto né da un server Linux sempre acceso.
+Miracolo integra **Condor e Hummingbot originali**, con **Alpaca PAPER come unico ambiente broker autorizzato per la fase iniziale**. Cloudflare ospita la web app Miracolo, le API edge e D1; Condor/Hummingbot richiedono il proprio runtime persistente.
 
 ## Architettura
 
-- **Cloudflare Worker**: API same-origin e scanner schedulato.
-- **Cloudflare D1**: journal persistente di stato e segnali.
-- **Cloudflare Workers Static Assets**: dashboard mobile-first dalla cartella `web/`.
-- **Alpaca PAPER**: unica integrazione broker; le chiavi sono Worker Secrets, mai esposte al browser.
-- **Cloudflare Access**: protegge gli endpoint privati e la dashboard.
-- **Condor**: solo riferimento UI/UX. Hummingbot e simulatori browser non sono nel percorso di esecuzione.
+- **Condor**: dashboard e control room originali, non ricostruite; sorgente upstream inclusa come Git submodule in `upstream/condor/`.
+- **Hummingbot + Hummingbot API**: motore e servizi originali, secondo i requisiti upstream e l'installazione ufficiale Condor.
+- **Cloudflare Worker**: accesso web Miracolo e API edge compatibili.
+- **Cloudflare D1**: database Miracolo già previsto dal progetto; mantenere il database esistente e la relativa associazione, non crearne uno duplicato.
+- **Cloudflare Workers Static Assets**: web app mobile-first dalla cartella `web/`, tema scuro.
+- **Alpaca PAPER**: adapter esistente nel vecchio Miracolo Lab, separato da Hummingbot. La revisione Hummingbot fissata non include un connector Alpaca nativo: per eseguire Alpaca attraverso Hummingbot serve un connector dedicato, da sviluppare e collaudare prima di qualsiasi ordine.
+- **Accesso privato Condor**: Tailscale Serve (preferito) oppure Cloudflare Tunnel + Access; non esporre le porte di servizio.
 
-## Stato reale
+## Stato verificato del codice
 
 | Componente | Stato |
 |---|---|
-| Dashboard statica | Implementata |
-| Worker API Cloudflare | Implementata, da distribuire |
-| Cron scanner crypto EMA 9/21 | Implementato con cursori per simbolo, recupero dei bar persi e controllo dati stale; da distribuire |
-| Journal D1 | Segnali, cursori, prenotazioni rischio e schema registro ordini pronti; database da creare nell'account Cloudflare |
-| Lettura privata Alpaca PAPER | Implementata nel Worker, richiede secrets e Cloudflare Access |
-| Risk Gateway | Modulo Cloudflare e policy Python implementati e testati; controlli non ancora collegati all'invio ordini |
-| Riconciliazione broker/journal | Implementata in sola lettura, con controlli su posizioni, ordini e stop; da verificare su account reale PAPER |
-| Macchina a stati ordini | Implementata e testata, non ancora collegata all'invio ordini |
-| Motore di esecuzione end-to-end | Ancora da implementare e testare |
-| Invio ordini | **Bloccato** |
-| LIVE | **Disabilitato** |
+| Web app Miracolo | Implementata, tema scuro |
+| Link alla dashboard originale Condor | Implementato; richiede URL HTTPS e runtime Condor raggiungibile |
+| Route Worker `/condor` | Implementata, rifiuta URL non HTTPS |
+| Worker API e scanner | Presenti nel repository, da verificare nel deploy effettivo |
+| D1 | Binding `DB` e migrazioni presenti; usare il database già esistente e verificare il suo ID |
+| Alpaca PAPER | Endpoint di lettura presenti; esecuzione ordini non abilitata |
+| Esecuzione automatica PAPER | Bloccata fino al completamento e test dell'intero percorso di rischio |
+| LIVE | Disabilitato |
 
-La scansione interroga separatamente BTC/USD, ETH/USD e QNT/USD, usa solo barre da 1 minuto chiuse e controlla che i dati siano recenti. I cursori D1 consentono di recuperare i crossover delle barre non ancora elaborate dopo un ritardo del Cron. La scansione registra segnali, non ordini. Nessun ordine viene inviato da questa versione.
+La scansione registra segnali EMA 9/21 su barre crypto chiuse da un minuto. Non invia ordini. La dashboard Miracolo non sostituisce le funzioni originali di Condor.
 
-## Pubblicazione
+## Sorgente upstream Condor
 
-Segui [la guida Cloudflare](docs/runtime-deployment.md). Il primo deploy richiede un D1 database e tre GitHub repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` e `D1_DATABASE_ID`. Dopo il primo deploy, attiva Cloudflare Access sul Worker e aggiungi i secrets Alpaca PAPER e Access. Il workflow pubblica automaticamente gli aggiornamenti su `main`.
+Il submodule ufficiale è fissato al commit `2442752df1259651002034055a32d974da29a361`. Clonare il repository con `git clone --recurse-submodules` e verificare il pin con `git -C upstream/condor rev-parse HEAD`. Le istruzioni e i requisiti di installazione sono in [docs/condor-integration.md](docs/condor-integration.md). Non copiare né riscrivere la dashboard: si usa quella upstream.
 
-Il link finale avrà il formato `https://miracolo-trading-ai.<workers-subdomain>.workers.dev`. Il sottodominio è assegnato dal tuo account Cloudflare, quindi non viene inventato né dato per attivo prima della verifica.
+## Collegamento Condor
+
+Impostare il GitHub Actions secret `CONDOR_WEB_URL` con l'URL HTTPS della dashboard Condor, raggiungibile dal browser e protetto da Cloudflare Access. Il workflow lo carica come Worker Secret durante il deploy. Il link Condor nella barra laterale apre la dashboard originale in una nuova scheda. Non esporre direttamente la porta locale 8088 né la porta Hummingbot API 8000.
+
+Il redirect conferma soltanto l'indirizzo configurato: la disponibilità di Condor, Hummingbot API e bot va verificata separatamente con i relativi health check.
+
+## Pubblicazione Cloudflare e D1 esistente
+
+Seguire [la guida runtime](docs/runtime-deployment.md). **Non creare un nuovo database D1**: il progetto deve continuare a usare quello già creato e associato in Cloudflare.
+
+Il workflow legge l'ID D1 dal GitHub Actions secret `D1_DATABASE_ID` e lo inserisce temporaneamente in `wrangler.jsonc` durante il deploy. Verificare che il secret contenga l'UUID del database esistente chiamato `miracolo-trading-ai`. Conservare il binding `DB` e applicare solo le migrazioni previste dal repository. Non sostituire il database o cancellarne i dati.
+
+Servono inoltre i secrets `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`. Il nome host Workers è assegnato dall'account Cloudflare e va verificato dopo il deploy, non inventato.
 
 ## Sicurezza
 
-Non inserire mai chiavi o token in Git, nel frontend, in URL o nella chat. Usa esclusivamente credenziali Alpaca PAPER. Il codice non abilita LIVE e non invia ordini. Prima di qualsiasi esecuzione PAPER dovranno essere completati Risk Gateway, riconciliazione ordini e ciclo di protezione stop-loss end-to-end.
+Non inserire chiavi o token in Git, frontend, URL o chat. Usare esclusivamente credenziali Alpaca PAPER. LIVE resta disabilitato. Nessun ordine PAPER automatico va attivato prima di test end-to-end su preflight, rischio, fill parziali, stop protettivi, riavvio, riconciliazione e gestione delle emergenze.
 
 ## Test locali
 
@@ -46,4 +56,4 @@ python -m unittest discover -s tests -v
 node --check web/app.js
 node --input-type=module --check < cloudflare/worker.js
 node --test tests/cloudflare-worker.test.mjs tests/cloudflare-risk-gateway.test.mjs tests/cloudflare-order-lifecycle.test.mjs
-``
+```
