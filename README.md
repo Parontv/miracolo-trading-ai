@@ -9,7 +9,7 @@ Miracolo integra **Condor e Hummingbot originali**, con **Alpaca PAPER come unic
 - **Cloudflare Worker**: accesso web Miracolo e API edge compatibili.
 - **Cloudflare D1**: database Miracolo già previsto dal progetto; mantenere il database esistente e la relativa associazione, non crearne uno duplicato.
 - **Cloudflare Workers Static Assets**: web app mobile-first dalla cartella `web/`, tema scuro.
-- **Alpaca PAPER**: integrazione broker esistente da riutilizzare e completare in sicurezza; credenziali solo nei Worker Secrets.
+- **Alpaca PAPER**: adapter esistente nel vecchio Miracolo Lab, separato da Hummingbot. La revisione Hummingbot fissata non include un connector Alpaca nativo: per eseguire Alpaca attraverso Hummingbot serve un connector dedicato, da sviluppare e collaudare prima di qualsiasi ordine.
 - **Cloudflare Access/Tunnel**: accesso HTTPS protetto alla web app e alla dashboard Condor.
 
 ## Stato verificato del codice
