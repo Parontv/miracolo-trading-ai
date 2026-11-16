@@ -105,9 +105,13 @@ jobs:
           const root = await fetch(base + '/', { redirect: 'manual', signal: AbortSignal.timeout(15000) });
           if (process.env.CONDOR_WEB_URL) {
             assert.equal(root.status, 302, 'Configured Condor URL must produce a redirect');
-            assert.equal(root.headers.get('location'), process.env.CONDOR_WEB_URL, 'Root redirect must target configured Condor URL');
+            assert.equal(root.headers.get('location'), new URL(process.env.CONDOR_WEB_URL).href, 'Root redirect must target configured Condor URL');
+          } else if (root.status === 302) {
+            const location = new URL(root.headers.get('location'));
+            assert.equal(location.protocol, 'https:', 'Any pre-existing Condor redirect must use HTTPS');
+            assert.notEqual(location.origin, new URL(base).origin, 'Root redirect must not loop to the Worker');
           } else {
-            assert.equal(root.status, 200, 'Without Condor URL the diagnostic fallback must remain available');
+            assert.equal(root.status, 200, 'Without a Condor redirect the diagnostic fallback must remain available');
           }
           console.log('Worker smoke test passed: health, PAPER-only guardrails, and root routing.');
           NODE
