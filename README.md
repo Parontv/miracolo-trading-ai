@@ -29,7 +29,7 @@ La scansione registra segnali EMA 9/21 su barre crypto chiuse da un minuto. Non 
 
 ## Collegamento Condor
 
-Impostare la variabile Worker `CONDOR_WEB_URL` con l'URL HTTPS della dashboard Condor, raggiungibile dal browser e protetto da Cloudflare Access. Il link Condor nella barra laterale apre la dashboard originale in una nuova scheda. Non esporre direttamente la porta locale 8088 né la porta Hummingbot API 8000.
+Impostare il GitHub Actions secret `CONDOR_WEB_URL` con l'URL HTTPS della dashboard Condor, raggiungibile dal browser e protetto da Cloudflare Access. Il workflow lo carica come Worker Secret durante il deploy. Il link Condor nella barra laterale apre la dashboard originale in una nuova scheda. Non esporre direttamente la porta locale 8088 né la porta Hummingbot API 8000.
 
 Il redirect conferma soltanto l'indirizzo configurato: la disponibilità di Condor, Hummingbot API e bot va verificata separatamente con i relativi health check.
 
