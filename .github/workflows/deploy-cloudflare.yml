@@ -46,7 +46,7 @@ jobs:
               done
               echo "Aggiungili in Settings > Secrets and variables > Actions e rilancia il workflow."
             } >> "$GITHUB_STEP_SUMMARY"
-            printf 'Missing GitHub Actions secret: %s\n' "${missing_secrets[@]}"
+            printf 'Missing GitHub Actions secret: %s\\n' "${missing_secrets[@]}"
             exit 1
           fi
           if ! [[ "$D1_ID" =~ ^([a-fA-F0-9]{32}|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$ ]]; then
@@ -86,3 +86,28 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Smoke test deployed Worker
+        if: steps.config.outputs.ready == 'true'
+        env:
+          CONDOR_WEB_URL: ${{ secrets.CONDOR_WEB_URL }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const base = 'https://miracolo-trading-ai.listaconcerti.workers.dev';
+          const healthResponse = await fetch(base + '/api/health', { signal: AbortSignal.timeout(15000) });
+          assert.equal(healthResponse.status, 200, 'Worker health endpoint must return HTTP 200');
+          const health = await healthResponse.json();
+          assert.equal(health.ok, true, 'Worker health payload must be ok');
+          assert.equal(health.mode, 'PAPER', 'Worker must remain in PAPER mode');
+          assert.equal(health.live_enabled, false, 'LIVE must remain disabled');
+          assert.equal(health.execution_enabled, false, 'Order execution must remain disabled');
+          assert.equal(health.alpaca_configured, true, 'Alpaca PAPER credentials must be configured');
+          const root = await fetch(base + '/', { redirect: 'manual', signal: AbortSignal.timeout(15000) });
+          if (process.env.CONDOR_WEB_URL) {
+            assert.equal(root.status, 302, 'Configured Condor URL must produce a redirect');
+            assert.equal(root.headers.get('location'), process.env.CONDOR_WEB_URL, 'Root redirect must target configured Condor URL');
+          } else {
+            assert.equal(root.status, 200, 'Without Condor URL the diagnostic fallback must remain available');
+          }
+          console.log('Worker smoke test passed: health, PAPER-only guardrails, and root routing.');
+          NODE
