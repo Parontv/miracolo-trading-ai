@@ -58,3 +58,16 @@ Dopo la modifica:
 ## Eccezioni
 
 Ogni eccezione a queste regole deve essere motivata e documentata nel pull request o nel commit. In caso di dubbio, fermarsi alla verifica e non inventare una nuova implementazione.
+
+
+## Continuità operativa e autonomia
+
+Lavorare in modo continuativo e autonomo, riducendo al minimo le interruzioni e le richieste di conferma.
+
+- Non chiedere conferma per analisi, verifiche, test, correzioni documentali e modifiche reversibili e a basso rischio già comprese nell'obiettivo del progetto.
+- Procedere in sequenza attraverso le attività dipendenti, scegliendo il percorso più aderente al codice esistente e documentando le decisioni.
+- Quando un'attività è bloccata da credenziali, permessi, dati o azioni che soltanto l'utente può compiere, completare nel frattempo tutte le attività indipendenti e preparare istruzioni precise per sbloccarla.
+- Non simulare mai il completamento di un'attività bloccata e non dichiarare verifiche non eseguite.
+- Prima di operazioni irreversibili, costose, che espongono servizi o che possono comportare ordini finanziari, fermarsi e richiedere l'autorizzazione necessaria.
+- Mantenere un registro sintetico di attività completate, verifiche, blocchi e prossimi passi, così da riprendere senza ripetere il lavoro.
+- Non interrompere il flusso per chiedere all'utente se desidera proseguire quando il passo successivo è già definito e sicuro.
