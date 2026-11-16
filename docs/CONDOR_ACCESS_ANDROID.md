@@ -49,3 +49,20 @@ Il Worker Cloudflare è già pubblicato, ma il secret `CONDOR_WEB_URL` non era p
 - La dashboard Condor non diventa un servizio Cloudflare Worker: il Worker effettua solo il redirect.
 - Alpaca PAPER è configurato nei secrets del Worker, ma la revisione Hummingbot fissata non contiene un connector Alpaca. Nessun ordine Alpaca può essere eseguito da Condor finché il connector dedicato non viene implementato e testato.
 - Non vengono create, inviate o abilitate operazioni LIVE.
+
+## Configurazione Cloudflare Access per i dati Alpaca
+
+La dashboard Miracolo usa endpoint Alpaca separati e protetti. Proteggi **solo il percorso API** per non mettere dietro login l'intera dashboard:
+
+1. Cloudflare Zero Trust → Access → Applications → Add an application → Self-hosted.
+2. Imposta come hostname `miracolo-trading-ai.listaconcerti.workers.dev` e come path `/api/alpaca/*`.
+3. Crea una policy **Allow** che includa esclusivamente il tuo indirizzo email.
+4. Salva l'applicazione e copia l'**Application Audience (AUD) Tag**.
+5. In Zero Trust → Settings → General recupera il **Team domain**.
+6. Nei GitHub Actions secrets del repository imposta:
+   - `ACCESS_TEAM_DOMAIN`: solo il nome del team, senza `.cloudflareaccess.com`;
+   - `ACCESS_AUD`: il valore AUD dell'applicazione.
+7. Rilancia **Deploy Cloudflare**.
+
+La root e gli endpoint diagnostici restano pubblici; solo `/api/alpaca/*` richiede login. Al primo accesso ai dati, completa il login Cloudflare Access nello stesso browser e ricarica la dashboard. Non proteggere l'intero Worker in questa configurazione: il controllo automatico di deploy deve poter leggere l'endpoint pubblico `/api/health`.
+
