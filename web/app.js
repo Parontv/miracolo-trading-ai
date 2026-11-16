@@ -148,7 +148,7 @@ async function refreshStatus() {
     notice.querySelector("strong").textContent = accessError ? "Accesso sicuro non configurato" : "Connessione non disponibile";
     notice.querySelector("span").textContent = accessError
       ? (error.message === "cloudflare_access_login_required"
-        ? "Completa il login Cloudflare Access nel browser, poi ricarica la dashboard."
+        ? "Apri /api/alpaca/status in una nuova scheda, completa il login Cloudflare Access, poi torna qui e ricarica."
         : "Il conto Alpaca è protetto. Configura Cloudflare Access per autorizzare la lettura dei dati.")
       : error.message;
     detail.textContent = "Le chiavi restano sul server; non inserirle mai nel browser.";
