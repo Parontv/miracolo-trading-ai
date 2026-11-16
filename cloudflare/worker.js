@@ -308,6 +308,18 @@ async function routeApi(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/condor") {
+      const destination = String(env.CONDOR_WEB_URL || "").trim();
+      try {
+        const target = new URL(destination);
+        if (target.protocol !== "https:" || target.username || target.password) {
+          return response({ ok: false, error: "condor_url_must_be_https" }, 503);
+        }
+        return Response.redirect(target.href, 302);
+      } catch {
+        return response({ ok: false, error: "condor_runtime_not_configured" }, 503);
+      }
+    }
     if (url.pathname.startsWith("/api/")) {
       try { return await routeApi(request, env); }
       catch (error) { return response({ ok: false, error: "service_unavailable" }, 503); }
