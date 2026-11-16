@@ -6,16 +6,18 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 
 - **Cloudflare Worker**: API same-origin e scanner schedulato.
 - **Cloudflare D1**: journal persistente di stato e segnali.
-- **Cloudflare Workers Static Assets**: dashboard mobile-first dalla cartella `web/`.
+- **Cloudflare Workers Static Assets**: dashboard mobile-first dalla cartella `web/`, tema scuro.
+- **Condor Web**: voce dedicata nella web app che apre la dashboard originale Condor tramite URL HTTPS protetto (`CONDOR_WEB_URL`); non viene clonata né riscritta.
 - **Alpaca PAPER**: unica integrazione broker; le chiavi sono Worker Secrets, mai esposte al browser.
 - **Cloudflare Access**: protegge gli endpoint privati e la dashboard.
-- **Condor**: solo riferimento UI/UX. Hummingbot e simulatori browser non sono nel percorso di esecuzione.
+- **Condor**: dashboard originale e control room operativa. Il collegamento richiede un runtime Condor persistente raggiungibile via HTTPS e protetto da Cloudflare Access o Tailscale. Hummingbot resta il motore di esecuzione; non viene sostituito da un simulatore browser.
 
 ## Stato reale
 
 | Componente | Stato |
 |---|---|
-| Dashboard statica | Implementata |
+| Dashboard web Miracolo | Implementata, tema scuro |
+| Accesso alla dashboard originale Condor | Route `/condor` implementata; richiede `CONDOR_WEB_URL` HTTPS e runtime Condor attivo |
 | Worker API Cloudflare | Implementata, da distribuire |
 | Cron scanner crypto EMA 9/21 | Implementato con cursori per simbolo, recupero dei bar persi e controllo dati stale; da distribuire |
 | Journal D1 | Segnali, cursori, prenotazioni rischio e schema registro ordini pronti; database da creare nell'account Cloudflare |
@@ -28,6 +30,10 @@ Miracolo è una piattaforma **crypto-only** con **Alpaca PAPER come unico broker
 | LIVE | **Disabilitato** |
 
 La scansione interroga separatamente BTC/USD, ETH/USD e QNT/USD, usa solo barre da 1 minuto chiuse e controlla che i dati siano recenti. I cursori D1 consentono di recuperare i crossover delle barre non ancora elaborate dopo un ritardo del Cron. La scansione registra segnali, non ordini. Nessun ordine viene inviato da questa versione.
+
+## Collegamento Condor
+
+Configura `CONDOR_WEB_URL` come variabile del Worker Cloudflare, con l’indirizzo HTTPS pubblico della dashboard Condor esposta tramite Cloudflare Tunnel e protetta da Cloudflare Access. Il link Condor nella barra laterale apre la dashboard originale in una nuova scheda. Non esporre direttamente la porta locale 8088 né la porta Hummingbot API 8000. La variabile deve puntare all’URL di Condor effettivamente raggiungibile dal browser dopo autenticazione.
 
 ## Pubblicazione
 
