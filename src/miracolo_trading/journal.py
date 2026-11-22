@@ -35,6 +35,11 @@ class Journal:
                     created_at TEXT NOT NULL,
                     payload TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS scan_cursors (
+                    symbol TEXT PRIMARY KEY,
+                    last_bar_time TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
             """)
 
     @contextmanager
@@ -94,6 +99,24 @@ class Journal:
         return {"status": current_status, "last_heartbeat": row["last_heartbeat"],
                 "last_cycle": row["last_cycle"], "age_seconds": age_seconds,
                 "message": message, "signals_recorded": count}
+
+    def scan_cursor(self, symbol: str) -> str | None:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT last_bar_time FROM scan_cursors WHERE symbol=?", (symbol,)
+            ).fetchone()
+        return row["last_bar_time"] if row else None
+
+    def update_scan_cursor(self, symbol: str, bar_time: str):
+        with self._connect() as db:
+            db.execute("""
+                INSERT INTO scan_cursors(symbol,last_bar_time,updated_at)
+                VALUES(?,?,?)
+                ON CONFLICT(symbol) DO UPDATE SET
+                    last_bar_time=excluded.last_bar_time,
+                    updated_at=excluded.updated_at
+                WHERE excluded.last_bar_time > scan_cursors.last_bar_time
+            """, (symbol, bar_time, self.now()))
 
     def recent_signals(self, limit: int = 20):
         with self._connect() as db:

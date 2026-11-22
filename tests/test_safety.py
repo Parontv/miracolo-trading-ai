@@ -51,10 +51,21 @@ class SafetyPolicyTests(unittest.TestCase):
         state = {**self.state, "open_positions": 3}
         self.assertFalse(approve_intent(self.intent, self.policy, **state)[0])
 
-    def test_does_not_block_sell_when_position_limit_reached(self):
+    def test_legacy_helper_rejects_sell_without_position_aware_context(self):
         intent = TradeIntent("risk", "SELL", 50, True)
-        state = {**self.state, "open_positions": 3}
-        self.assertTrue(approve_intent(intent, self.policy, **state)[0])
+        self.assertEqual(
+            approve_intent(intent, self.policy, **self.state),
+            (False, "Position-aware reduce-only SELLs must use the Risk Gateway."),
+        )
+
+    def test_legacy_helper_fails_closed_on_non_finite_risk_values(self):
+        intent = TradeIntent("manual", "BUY", float("nan"), True)
+        self.assertFalse(approve_intent(intent, self.policy, **self.state)[0])
+        state = {**self.state, "daily_pnl_usd": float("nan")}
+        self.assertEqual(
+            approve_intent(self.intent, self.policy, **state),
+            (False, "Daily P&L snapshot is invalid."),
+        )
 
     def test_blocks_order_above_notional_cap(self):
         intent = TradeIntent("manual", "BUY", 101, True)

@@ -72,12 +72,14 @@ class AdapterTests(unittest.TestCase):
                 return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
             if path == "/v2/positions":
                 return FakeResponse([{"symbol": "BTC/USD", "qty": "0.01"}])
+            if path.startswith("/v2/orders?"):
+                return FakeResponse([])
             if path == "/v2/orders":
                 return FakeResponse({"id": "stop-order", "type": "stop_limit"})
             return FakeResponse({})
         client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
         result = client.submit_stop_limit_order(
-            "BTC/USD", "0.001", "95", "94.5", "miracolo-stop-001"
+            "BTC/USD", "0.01", "95", "94.5", "miracolo-stop-001"
         )
         self.assertEqual(result["type"], "stop_limit")
         body = json.loads(calls[-1].data)
@@ -86,11 +88,121 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(body["stop_price"], "95.0")
         self.assertEqual(body["limit_price"], "94.5")
 
+    def test_boolean_broker_position_quantity_is_rejected(self):
+        def opener(request, timeout):
+            path = request.full_url.removeprefix(PAPER_BASE_URL)
+            if path.startswith("/v2/assets/BTC"):
+                return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
+            if path == "/v2/positions":
+                return FakeResponse([{"symbol": "BTC/USD", "qty": True}])
+            if path.startswith("/v2/orders?"):
+                return FakeResponse([])
+            return FakeResponse({})
+        client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
+        with self.assertRaisesRegex(AlpacaError, "broker_position_quantity_invalid"):
+            client.submit_market_order("BTC/USD", "sell", qty=0.001)
+        with self.assertRaisesRegex(AlpacaError, "broker_position_quantity_invalid"):
+            client.submit_stop_limit_order("BTC/USD", "0.01", "95", "94.5", "miracolo-stop-006")
+
+    def test_stop_limit_rejects_undersized_protection(self):
+        def opener(request, timeout):
+            path = request.full_url.removeprefix(PAPER_BASE_URL)
+            if path.startswith("/v2/assets/BTC"):
+                return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
+            if path == "/v2/positions":
+                return FakeResponse([{"symbol": "BTC/USD", "qty": "0.01"}])
+            if path.startswith("/v2/orders?"):
+                return FakeResponse([])
+            return FakeResponse({})
+        client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
+        with self.assertRaisesRegex(AlpacaError, "stop_quantity_must_match_position"):
+            client.submit_stop_limit_order(
+                "BTC/USD", "0.001", "95", "94.5", "miracolo-stop-003"
+            )
+
+    def test_sell_and_stop_reject_invalid_broker_position_quantities(self):
+        def opener(request, timeout):
+            path = request.full_url.removeprefix(PAPER_BASE_URL)
+            if path.startswith("/v2/assets/BTC"):
+                return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
+            if path == "/v2/positions":
+                return FakeResponse([{"symbol": "BTC/USD", "qty": "nan"}])
+            if path.startswith("/v2/orders?"):
+                return FakeResponse([])
+            return FakeResponse({})
+        client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
+        with self.assertRaisesRegex(AlpacaError, "broker_position_quantity_invalid"):
+            client.submit_market_order("BTC/USD", "sell", qty=0.001)
+        with self.assertRaisesRegex(AlpacaError, "broker_position_quantity_invalid"):
+            client.submit_stop_limit_order("BTC/USD", "0.01", "95", "94.5", "miracolo-stop-005")
+
+    def test_stop_limit_rejects_an_existing_active_sell_order(self):
+        calls = []
+        def opener(request, timeout):
+            calls.append(request)
+            path = request.full_url.removeprefix(PAPER_BASE_URL)
+            if path.startswith("/v2/assets/BTC"):
+                return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
+            if path == "/v2/positions":
+                return FakeResponse([{"symbol": "BTC/USD", "qty": "0.01"}])
+            if path.startswith("/v2/orders?"):
+                return FakeResponse([{"symbol": "BTC/USD", "side": "sell", "status": "accepted"}])
+            return FakeResponse({})
+        client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
+        with self.assertRaisesRegex(AlpacaError, "active_sell_order_conflicts_with_protective_stop"):
+            client.submit_stop_limit_order(
+                "BTC/USD", "0.01", "95", "94.5", "miracolo-stop-004"
+            )
+        self.assertFalse(any(call.method == "POST" for call in calls))
+
+    def test_market_exit_rejects_an_existing_active_sell_order(self):
+        calls = []
+        def opener(request, timeout):
+            calls.append(request)
+            path = request.full_url.removeprefix(PAPER_BASE_URL)
+            if path.startswith("/v2/assets/BTC"):
+                return FakeResponse({"class": "crypto", "tradable": True, "status": "active"})
+            if path == "/v2/positions":
+                return FakeResponse([{"symbol": "BTC/USD", "qty": "0.01"}])
+            if path.startswith("/v2/orders?"):
+                return FakeResponse([{"symbol": "BTC/USD", "side": "sell", "status": "accepted"}])
+            return FakeResponse({})
+        client = AlpacaPaperClient(AlpacaPaperConfig("paper-key", "paper-secret"), opener)
+        with self.assertRaisesRegex(AlpacaError, "active_sell_order_must_be_resolved_before_exit"):
+            client.submit_market_order("BTC/USD", "sell", qty=0.01)
+        self.assertFalse(any(call.method == "POST" for call in calls))
+
     def test_stop_limit_rejects_limit_above_stop(self):
         with self.assertRaisesRegex(AlpacaError, "invalid_stop_limit_relationship"):
             self.client.submit_stop_limit_order(
                 "BTC/USD", "0.001", "94", "95", "miracolo-stop-002"
             )
+
+    def test_order_ids_must_be_strings(self):
+        with self.assertRaisesRegex(AlpacaError, "invalid_client_order_id"):
+            self.client.submit_market_order("BTC/USD", "buy", notional=10, client_order_id=123)
+        with self.assertRaisesRegex(AlpacaError, "invalid_client_order_id"):
+            self.client.submit_stop_limit_order("BTC/USD", 0.01, 95, 94.5, 123)
+
+    def test_market_orders_reject_non_finite_sizes(self):
+        for value in (float("nan"), float("inf"), float("-inf"), True):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(AlpacaError, "invalid_order_size"):
+                    self.client.submit_market_order("BTC/USD", "buy", notional=value)
+
+    def test_stop_orders_reject_non_finite_quantity_and_prices(self):
+        invalid_values = [
+            ("nan", "95", "94"),
+            ("0.01", "inf", "94"),
+            ("0.01", "95", "nan"),
+            (True, "95", "94"),
+        ]
+        for index, values in enumerate(invalid_values):
+            with self.subTest(values=values):
+                with self.assertRaisesRegex(AlpacaError, "invalid_stop_order_values"):
+                    self.client.submit_stop_limit_order(
+                        "BTC/USD", *values, f"miracolo-stop-{index + 10:03d}"
+                    )
 
     def test_sell_requires_existing_long_position(self):
         with self.assertRaisesRegex(AlpacaError, "no_long_position_to_sell"):

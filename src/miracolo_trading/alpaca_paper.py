@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import uuid
@@ -115,12 +116,16 @@ class AlpacaPaperClient:
                                 client_order_id: str):
         if symbol not in ALLOWED_SYMBOLS:
             raise AlpacaError("symbol_not_allowed", 400)
-        if not CLIENT_ORDER_ID_RE.fullmatch(client_order_id):
+        if not isinstance(client_order_id, str) or not CLIENT_ORDER_ID_RE.fullmatch(client_order_id):
             raise AlpacaError("invalid_client_order_id", 400)
+        if any(isinstance(value, bool) for value in (qty, stop_price, limit_price)):
+            raise AlpacaError("invalid_stop_order_values", 400)
         try:
             quantity, stop, limit = float(qty), float(stop_price), float(limit_price)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             raise AlpacaError("invalid_stop_order_values", 400) from None
+        if not all(math.isfinite(value) for value in (quantity, stop, limit)):
+            raise AlpacaError("invalid_stop_order_values", 400)
         if quantity <= 0 or stop <= 0 or limit <= 0 or limit >= stop:
             raise AlpacaError("invalid_stop_limit_relationship", 400)
         asset = self._request("GET", "/v2/assets/" + quote(symbol, safe=""))
@@ -129,8 +134,31 @@ class AlpacaPaperClient:
             raise AlpacaError("asset_not_tradable", 409)
         positions = self.positions()
         held = next((p for p in positions if p.get("symbol") == symbol), None)
-        if not held or quantity > float(held.get("qty", 0)):
-            raise AlpacaError("stop_quantity_exceeds_position", 409)
+        if not held:
+            raise AlpacaError("no_position_to_protect", 409)
+        if isinstance(held.get("qty"), bool):
+            raise AlpacaError("broker_position_quantity_invalid", 502)
+        try:
+            held_qty = float(held.get("qty", 0))
+        except (TypeError, ValueError, OverflowError):
+            raise AlpacaError("broker_position_quantity_invalid", 502) from None
+        if not math.isfinite(held_qty) or held_qty <= 0:
+            raise AlpacaError("broker_position_quantity_invalid", 502)
+        if abs(quantity - held_qty) > 1e-8:
+            raise AlpacaError("stop_quantity_must_match_position", 409)
+        open_orders = self.orders()
+        if not isinstance(open_orders, list):
+            raise AlpacaError("alpaca_orders_invalid", 502)
+        active_sell = any(
+            item.get("symbol") == symbol and item.get("side") == "sell"
+            and str(item.get("status", "")).lower() in {
+                "new", "accepted", "pending_new", "partially_filled",
+                "held", "pending_replace", "pending_cancel",
+            }
+            for item in open_orders
+        )
+        if active_sell:
+            raise AlpacaError("active_sell_order_conflicts_with_protective_stop", 409)
         payload = {
             "symbol": symbol, "side": "sell", "type": "stop_limit",
             "time_in_force": "gtc", "qty": str(quantity),
@@ -151,17 +179,20 @@ class AlpacaPaperClient:
             raise AlpacaError("buy_orders_require_usd_notional", 400)
         if side == "sell" and qty is None:
             raise AlpacaError("sell_orders_require_position_quantity", 400)
+        raw_amount = notional if notional is not None else qty
+        if isinstance(raw_amount, bool):
+            raise AlpacaError("invalid_order_size", 400)
         try:
-            amount = float(notional if notional is not None else qty)
-        except (TypeError, ValueError):
+            amount = float(raw_amount)
+        except (TypeError, ValueError, OverflowError):
             raise AlpacaError("invalid_order_size", 400) from None
-        if amount <= 0:
+        if not math.isfinite(amount) or amount <= 0:
             raise AlpacaError("invalid_order_size", 400)
         if notional is not None and amount > MAX_ORDER_NOTIONAL_USD:
             raise AlpacaError("order_limit_exceeded", 400)
         if client_order_id is None:
             client_order_id = "ml-" + uuid.uuid4().hex[:32]
-        if not CLIENT_ORDER_ID_RE.fullmatch(client_order_id):
+        if not isinstance(client_order_id, str) or not CLIENT_ORDER_ID_RE.fullmatch(client_order_id):
             raise AlpacaError("invalid_client_order_id", 400)
 
         # Verify the pair is currently active and tradable for this Paper account.
@@ -175,13 +206,29 @@ class AlpacaPaperClient:
             held = next((p for p in positions if p.get("symbol") == symbol), None)
             if not held:
                 raise AlpacaError("no_long_position_to_sell", 409)
-            held_qty = float(held.get("qty", 0))
+            if isinstance(held.get("qty"), bool):
+                raise AlpacaError("broker_position_quantity_invalid", 502)
+            try:
+                held_qty = float(held.get("qty", 0))
+            except (TypeError, ValueError, OverflowError):
+                raise AlpacaError("broker_position_quantity_invalid", 502) from None
+            if not math.isfinite(held_qty) or held_qty <= 0:
+                raise AlpacaError("broker_position_quantity_invalid", 502)
             if qty is None or amount > held_qty:
                 raise AlpacaError("sell_quantity_exceeds_position", 400)
 
         open_orders = self.orders()
         if not isinstance(open_orders, list):
             raise AlpacaError("alpaca_orders_invalid", 502)
+        if side == "sell" and any(
+            item.get("symbol") == symbol and item.get("side") == "sell"
+            and str(item.get("status", "")).lower() in {
+                "new", "accepted", "pending_new", "partially_filled",
+                "held", "pending_replace", "pending_cancel",
+            }
+            for item in open_orders
+        ):
+            raise AlpacaError("active_sell_order_must_be_resolved_before_exit", 409)
         if len(open_orders) >= 10:
             raise AlpacaError("open_order_limit_reached", 409)
         if side == "buy":
