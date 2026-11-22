@@ -25,6 +25,13 @@ class MigrationTests(unittest.TestCase):
         self.assertIn("order_journal", names)
         self.assertIn("idx_signals_created_at", names)
         self.assertIn("idx_order_journal_state_updated", names)
+        self.assertIn("idx_order_journal_created_client", names)
+
+    def test_emergency_exit_order_id_column_exists(self):
+        columns = {
+            row[1] for row in self.db.execute("PRAGMA table_info(order_journal)").fetchall()
+        }
+        self.assertIn("emergency_exit_order_id", columns)
 
     def test_signal_key_is_unique_and_side_is_constrained(self):
         values = ("BTC/USD:BUY:2026-11-09T10:00:00Z", "BTC/USD", "BUY",

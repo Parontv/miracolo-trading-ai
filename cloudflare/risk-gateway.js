@@ -11,7 +11,9 @@ export const DEFAULT_RISK_POLICY = Object.freeze({
 });
 
 function finiteNumber(value) {
-  return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+  if (typeof value !== "number" && typeof value !== "string") return false;
+  if (typeof value === "string" && value.trim() === "") return false;
+  return Number.isFinite(Number(value));
 }
 
 function finitePositive(value) {
@@ -45,24 +47,23 @@ export function evaluateRisk(intent, snapshot, policy = DEFAULT_RISK_POLICY) {
     return { allowed: false, reason: "ai_order_not_allowed" };
   }
 
-  if (typeof snapshot.killSwitch !== "boolean") {
+  if (typeof snapshot.killSwitch !== "boolean" && !(side === "SELL" && intent.reduceOnly === true)) {
     return { allowed: false, reason: "kill_switch_state_unknown" };
   }
-  const ordersLastMinute = Number(snapshot.ordersLastMinute);
-  if (!nonnegativeInteger(snapshot.ordersLastMinute)) {
-    return { allowed: false, reason: "order_rate_unknown" };
-  }
-  if (ordersLastMinute >= policy.maxOrdersPerMinute) {
-    return { allowed: false, reason: "order_rate_limit" };
-  }
-
   if (side === "BUY") {
+    const ordersLastMinute = Number(snapshot.ordersLastMinute);
+    if (!nonnegativeInteger(snapshot.ordersLastMinute)) {
+      return { allowed: false, reason: "order_rate_unknown" };
+    }
+    if (ordersLastMinute >= policy.maxOrdersPerMinute) {
+      return { allowed: false, reason: "order_rate_limit" };
+    }
     const dailyPnlUsd = Number(snapshot.dailyPnlUsd);
     if (!finiteNumber(snapshot.dailyPnlUsd)) return { allowed: false, reason: "daily_pnl_unknown" };
     if (dailyPnlUsd <= -policy.maxDailyLossUsd) return { allowed: false, reason: "daily_loss_limit" };
 
     const openPositions = Number(snapshot.openPositions);
-    const pendingRaw = snapshot.pendingBuyReservations === undefined ? 0 : snapshot.pendingBuyReservations;
+    const pendingRaw = snapshot.pendingBuyReservations;
     const pendingBuyReservations = Number(pendingRaw);
     if (!nonnegativeInteger(snapshot.openPositions) || !nonnegativeInteger(pendingRaw)) {
       return { allowed: false, reason: "position_count_unknown" };
@@ -81,11 +82,23 @@ export function evaluateRisk(intent, snapshot, policy = DEFAULT_RISK_POLICY) {
     }
   } else {
     if (intent.reduceOnly !== true) return { allowed: false, reason: "sell_must_reduce_position" };
+    if (snapshot.heldSymbol !== intent.symbol) {
+      return { allowed: false, reason: "sell_position_symbol_mismatch" };
+    }
     if (!finitePositive(intent.quantity) || !finitePositive(snapshot.heldQuantity)) {
       return { allowed: false, reason: "held_quantity_unknown" };
     }
     if (Number(intent.quantity) > Number(snapshot.heldQuantity)) {
       return { allowed: false, reason: "sell_exceeds_position" };
+    }
+    if (!finitePositive(intent.referencePrice)) {
+      return { allowed: false, reason: "sell_reference_price_unknown" };
+    }
+    const calculatedNotional = Number(intent.quantity) * Number(intent.referencePrice);
+    const notionalTolerance = Math.max(1e-6, calculatedNotional * 1e-6);
+    if (!Number.isFinite(calculatedNotional) ||
+        Math.abs(Number(intent.notionalUsd) - calculatedNotional) > notionalTolerance) {
+      return { allowed: false, reason: "sell_notional_mismatch" };
     }
   }
 

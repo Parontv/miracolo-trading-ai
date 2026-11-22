@@ -36,6 +36,8 @@ test("counts pending reservations against the open position limit", () => {
 test("blocks an order above the notional limit and invalid numeric values", () => {
   assert.equal(evaluateRisk({ ...buyIntent, notionalUsd: 100.01 }, baseSnapshot).reason, "order_notional_limit");
   assert.equal(evaluateRisk({ ...buyIntent, notionalUsd: Number.NaN }, baseSnapshot).reason, "invalid_notional");
+  assert.equal(evaluateRisk({ ...buyIntent, notionalUsd: true }, baseSnapshot).reason, "invalid_notional");
+  assert.equal(evaluateRisk({ ...buyIntent, notionalUsd: [50] }, baseSnapshot).reason, "invalid_notional");
 });
 
 test("requires a protective stop-loss below the reference price", () => {
@@ -55,10 +57,52 @@ test("blocks AI-generated orders and symbols outside the allowlist", () => {
 });
 
 test("kill switch still permits a bounded reduce-only sell", () => {
-  const sell = { symbol: "BTC/USD", side: "SELL", notionalUsd: 50, quantity: 0.01, reduceOnly: true };
-  const snapshot = { ...baseSnapshot, killSwitch: true, heldQuantity: 0.02 };
+  const sell = { symbol: "BTC/USD", side: "SELL", notionalUsd: 1, referencePrice: 100, quantity: 0.01, reduceOnly: true };
+  const snapshot = { ...baseSnapshot, killSwitch: true, heldSymbol: "BTC/USD", heldQuantity: 0.02, ordersLastMinute: 2 };
   assert.equal(evaluateRisk(sell, snapshot).allowed, true);
   assert.equal(evaluateRisk({ ...sell, quantity: 0.03 }, snapshot).reason, "sell_exceeds_position");
+});
+
+test("reduce-only exits remain available when kill-switch telemetry is unknown", () => {
+  const sell = {
+    symbol: "BTC/USD", side: "SELL", notionalUsd: 1, referencePrice: 100,
+    quantity: 0.01, reduceOnly: true,
+  };
+  const snapshot = {
+    ...baseSnapshot, killSwitch: undefined, heldSymbol: "BTC/USD", heldQuantity: 0.02,
+  };
+  assert.deepEqual(evaluateRisk(sell, snapshot), { allowed: true, reason: "approved" });
+});
+
+test("fails closed when pending buy reservations are unknown", () => {
+  const snapshot = { ...baseSnapshot };
+  delete snapshot.pendingBuyReservations;
+  assert.equal(evaluateRisk(buyIntent, snapshot).reason, "position_count_unknown");
+});
+
+test("does not block reduce-only risk exits at the entry order rate limit", () => {
+  const sell = { symbol: "BTC/USD", side: "SELL", notionalUsd: 1, referencePrice: 100, quantity: 0.01, reduceOnly: true };
+  const snapshot = { ...baseSnapshot, killSwitch: true, heldSymbol: "BTC/USD", heldQuantity: 0.02, ordersLastMinute: 2 };
+  assert.deepEqual(evaluateRisk(sell, snapshot), { allowed: true, reason: "approved" });
+});
+
+test("requires a bounded sell notional matching quantity and reference price", () => {
+  const sell = {
+    symbol: "BTC/USD", side: "SELL", notionalUsd: 50, referencePrice: 100,
+    quantity: 0.01, reduceOnly: true,
+  };
+  const snapshot = { ...baseSnapshot, heldSymbol: "BTC/USD", heldQuantity: 0.02 };
+  assert.equal(evaluateRisk(sell, snapshot).reason, "sell_notional_mismatch");
+  assert.equal(evaluateRisk({ ...sell, notionalUsd: 1, referencePrice: null }, snapshot).reason, "sell_reference_price_unknown");
+});
+
+test("rejects reduce-only sells when the held position symbol does not match", () => {
+  const sell = {
+    symbol: "BTC/USD", side: "SELL", notionalUsd: 1, referencePrice: 100,
+    quantity: 0.01, reduceOnly: true,
+  };
+  const snapshot = { ...baseSnapshot, heldSymbol: "ETH/USD", heldQuantity: 0.02 };
+  assert.equal(evaluateRisk(sell, snapshot).reason, "sell_position_symbol_mismatch");
 });
 
 test("enforces the per-minute order rate limit without a daily trade-count cap", () => {

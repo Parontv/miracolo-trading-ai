@@ -1,5 +1,6 @@
 """Deterministic, fail-closed risk policy for crypto-only PAPER trade intents."""
 from dataclasses import dataclass
+import math
 
 
 @dataclass(frozen=True)
@@ -46,16 +47,27 @@ def approve_intent(
         return False, "Live trading must remain disabled in this release."
     if intent.is_ai_generated and not policy.ai_agents_can_place_orders:
         return False, "AI-generated intents cannot submit orders directly."
-    if intent.side.upper() not in {"BUY", "SELL"}:
+    side = intent.side.upper()
+    if side not in {"BUY", "SELL"}:
         return False, "Unsupported order side."
-    if intent.notional_usd <= 0 or intent.notional_usd > policy.max_order_notional_usd:
+    if side == "SELL":
+        return False, "Position-aware reduce-only SELLs must use the Risk Gateway."
+    if (not isinstance(intent.notional_usd, (int, float)) or isinstance(intent.notional_usd, bool)
+            or not math.isfinite(intent.notional_usd) or intent.notional_usd <= 0
+            or intent.notional_usd > policy.max_order_notional_usd):
         return False, "Order notional is outside the allowed range."
     if policy.max_new_trades_per_day is not None and trades_today >= policy.max_new_trades_per_day:
         return False, "Daily trade limit reached."
+    if (not isinstance(open_positions, int) or isinstance(open_positions, bool) or open_positions < 0
+            or not isinstance(orders_last_minute, int) or isinstance(orders_last_minute, bool)
+            or orders_last_minute < 0):
+        return False, "Risk counters are invalid."
     if intent.side.upper() == "BUY" and open_positions >= policy.max_open_positions:
         return False, "Maximum open positions reached."
     if orders_last_minute >= policy.max_orders_per_minute:
         return False, "Order rate limit reached."
+    if not isinstance(daily_pnl_usd, (int, float)) or not math.isfinite(daily_pnl_usd):
+        return False, "Daily P&L snapshot is invalid."
     if daily_pnl_usd <= -abs(policy.max_daily_loss_usd):
         return False, "Daily loss limit reached."
     if policy.require_stop_loss and not intent.has_stop_loss:
